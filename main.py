@@ -72,6 +72,12 @@ def reply():
             # print("Detected intent:", response.query_result.intent.display_name)
             # print("Detected intent confidence:", response.query_result.intent_detection_confidence)
             # print("Fulfillment text:", response.query_result.fulfillment_text)
+            print(str(response.query_result.fulfillment_text))
             return respond(response.query_result.fulfillment_text)
         except InvalidArgument:
             raise
+
+
+
+
+        
