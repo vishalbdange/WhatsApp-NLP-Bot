@@ -59,11 +59,20 @@ def message():
 def respond(message):
     response = MessagingResponse()
     response.message(message)
+<<<<<<< HEAD
     return str(response )
 
 @app.route('/reply', methods=['POST'])
 def reply():
     message = request.form.get('Body') 
+=======
+    print(str(response))
+    return str(response)
+
+# @app.route('/reply', methods=['POST'])
+def reply1():
+    message = request.form.get('Body').lower()
+>>>>>>> 10d2f637310eee093db3ad8eed2c5bd99e99e32a
     if message:
         text_input = dialogflow.types.TextInput(text=message, language_code=DIALOGFLOW_LANGUAGE_CODE)
         query_input = dialogflow.types.QueryInput(text=text_input)
@@ -73,7 +82,16 @@ def reply():
             # print("Detected intent:", response.query_result.intent.display_name)
             # print("Detected intent confidence:", response.query_result.intent_detection_confidence)
             # print("Fulfillment text:", response.query_result.fulfillment_text)
+<<<<<<< HEAD
             send_message(str(response.query_result.fulfillment_text))
             return respond(response.query_result.fulfillment_text)
+=======
+            print(response.query_result.fulfillment_text)
+            return str(response.query_result.fulfillment_text)
+>>>>>>> 10d2f637310eee093db3ad8eed2c5bd99e99e32a
         except InvalidArgument:
             raise
+            # 
+@app.route('/reply', methods=['POST'])
+def reply():
+    return "abcdefg"
