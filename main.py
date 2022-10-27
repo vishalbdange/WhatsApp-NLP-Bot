@@ -1,3 +1,8 @@
+# my stuff
+from typing import Dict
+from dialogflow_fulfillment import Image, WebhookClient
+from pymongo import MongoClient
+
 # import flask for setting up the web server
 from flask import Flask, request
 
@@ -18,6 +23,7 @@ load_dotenv()
 import dialogflow
 from google.api_core.exceptions import InvalidArgument
 
+
 # creating the Flask object
 app = Flask(__name__)
 
@@ -37,6 +43,7 @@ SESSION_ID = os.environ['SESSION_ID']
 session_client = dialogflow.SessionsClient()
 session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
 
+
 def send_message(message_body):
     # send text message from bot to user
     text_message = client.messages.create(
@@ -45,24 +52,57 @@ def send_message(message_body):
         to='whatsapp:+91'+phone_number
     )
 
-@app.route('/message', methods=['GET', 'POST'])
-def message():
-    text_to_be_analyzed = "Cricket"
-    text_input = dialogflow.types.TextInput(text=text_to_be_analyzed, language_code=DIALOGFLOW_LANGUAGE_CODE)
-    query_input = dialogflow.types.QueryInput(text=text_input)
-    try:
-        response = session_client.detect_intent(session=session, query_input=query_input)
-    except InvalidArgument:
-        raise   
+# @app.route('/message', methods=['GET', 'POST'])
+# def message():
+#     text_to_be_analyzed = "Cricket"
+#     text_input = dialogflow.types.TextInput(text=text_to_be_analyzed, language_code=DIALOGFLOW_LANGUAGE_CODE)
+#     query_input = dialogflow.types.QueryInput(text=text_input)
+#     try:
+#         response = session_client.detect_intent(session=session, query_input=query_input)
+#     except InvalidArgument:
+#         raise   
 
 def respond(message):
     response = MessagingResponse()
     response.message(message)
     return str(response)
 
+def handler_df(agent_df: WebhookClient) -> None:
+    agent_df.add('How are you feeling today?')
+
 @app.route('/reply', methods=['POST'])
 def reply():
+    print("HELLLLLOCOCOCOCOCO")
     message = request.form.get('Body').lower()
+    
+    DATABASE_URL = os.environ['DATABASE_URL']
+    myclient = MongoClient(DATABASE_URL)
+    
+    db = myclient["wcdatabase"]
+    collection = db["test"]
+    records = {
+        "record":{
+            "_id": 10,
+            "name": "Dange",
+            "Roll No": "201080909",
+            "Branch": "IT",
+        }
+    }
+    
+    for record in records.values():
+        collection.insert_one(record)
+    
+    
+    # print(request)
+    # res = request.get_json(force=True)
+    # print("INNINININ")
+    # print(res)
+    # print(request.headers)
+    # agent_df = WebhookClient(request.headers)
+    
+    # agent_df.handle_request(handler_df)
+    # image = Image('https://www.sekirothegame.com/content/dam/atvi/sekiro/about/TGA-logo.png')
+    
     if message:
         text_input = dialogflow.types.TextInput(text=message, language_code=DIALOGFLOW_LANGUAGE_CODE)
         query_input = dialogflow.types.QueryInput(text=text_input)
@@ -72,6 +112,6 @@ def reply():
             # print("Detected intent:", response.query_result.intent.display_name)
             # print("Detected intent confidence:", response.query_result.intent_detection_confidence)
             # print("Fulfillment text:", response.query_result.fulfillment_text)
-            return respond(response.query_result.fulfillment_text)
+            return respond(response.query_result.fulfillment_text) 
         except InvalidArgument:
             raise
