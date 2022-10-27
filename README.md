@@ -1,5 +1,9 @@
 # WhatsApp Chatbot
 
+### Additional packages
+$ pip install flask_pymongo
+$ pip install dnspython
+
 ## Steps to run the bot locally
 * Install your desired version of Python on your local system if not installed already.
 * Install PIP(Preferred Installer Program). Though in newer versions, PIP is already installed.
