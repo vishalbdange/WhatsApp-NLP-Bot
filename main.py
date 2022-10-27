@@ -3,6 +3,9 @@ from typing import Dict
 from dialogflow_fulfillment import Image, WebhookClient
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import numpy as np
+import matplotlib.pyplot as plt
+import pyimgur
 
 # import flask for setting up the web server
 from flask import Flask, request
@@ -48,6 +51,10 @@ session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
 DATABASE_URL = os.environ['DATABASE_URL']
 myclient = MongoClient(DATABASE_URL)
 
+# IMGUR client
+IMGUR_CLIENT_ID = os.environ['IMGUR_CLIENT_ID']
+imgurclient = pyimgur.Imgur(IMGUR_CLIENT_ID)
+
 
 def send_message(message_body):
     # send text message from bot to user
@@ -86,9 +93,9 @@ def reply():
     collection = db["test"]
     records = {
         # "_id": 12,
-        "name": "Raj",
+        "name": "Karan",
         "Roll No": "1274849",
-        "Branch": "CIVIL",
+        "Branch": "IT",
         "quizzes": {
             "quiz-1": 6,
             "quiz-2": 4,
@@ -100,7 +107,8 @@ def reply():
             "quiz-8": 5,
             "quiz-9": 2,
             "quiz-10": 9,
-        }
+        },
+        "trial": [7,8,3,6,1,10,9,2,4,5]
     }
     
     # for record in records.values():
@@ -110,15 +118,19 @@ def reply():
     
     # ____________Mongo DB Updation_____________
     # collection.update_one({ 'name': 'Shubham' }, { "$set": { 'Branch': 'CSE' }})
+    # collection.update_one({ '_id': ObjectId("635a3e93abe65112ae6dd603")}, { "$push": { 'trial': 100}})
     
     
     # ____________Mongo DB Finding_____________
-    result  = collection.find_one({ '_id': ObjectId("635a3609b13d774162212cb2") })
-    print(result["quizzes"]['quiz-1'])
+    # result  = collection.find_one({ '_id': ObjectId("635a3e93abe65112ae6dd603") })
+    # print(result["quizzes"]['quiz-1'])
+    # quiz_marks = [result["quizzes"]['quiz-1'], result["quizzes"]['quiz-2']]
+    # print(quiz_marks)
+    # print(result["trial"])
     
     
     # ____________Mongo DB Deletion_____________
-    collection.delete_one({ 'name': 'Anshul'})
+    # collection.delete_one({ 'name': 'Anshul'})
     
     
     # ____________Dialogflow Fulfillment Trial_____________
@@ -132,7 +144,24 @@ def reply():
     # image = Image('https://www.sekirothegame.com/content/dam/atvi/sekiro/about/TGA-logo.png')
     
     
+    # ____________MatPlotLib & IMGUR Trial_____________
+    student  = collection.find_one({ '_id': ObjectId("635a40cdcb5832c943b1804f")})
+    student_marks = student["trial"]
+    print(student_marks)
     
+    plt.barh(["Quiz-1", "Quiz-2", "Quiz-3", "Quiz-4", "Quiz-5", "Quiz-6", "Quiz-7", "Quiz-8", "Quiz-9", "Quiz-10"], student_marks, align="center", label="Student Progress")
+    plt.legend()
+    plt.ylabel('Quizzes')
+    plt.xlabel('Marks')
+    plt.title('Progress of Student ID: {}'.format(student["_id"]))
+    plt.savefig('studentplot.png')
+    
+    uploaded_image = imgurclient.upload_image('studentplot.png', title="Student Progress")
+    print(uploaded_image.link)
+    
+    
+    
+    # _______________________ Keval Code ______________________
     if message:
         text_input = dialogflow.types.TextInput(text=message, language_code=DIALOGFLOW_LANGUAGE_CODE)
         query_input = dialogflow.types.QueryInput(text=text_input)

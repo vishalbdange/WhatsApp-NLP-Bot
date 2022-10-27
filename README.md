@@ -3,6 +3,10 @@
 ### Additional packages
 $ pip install flask_pymongo
 $ pip install dnspython
+$ pip install numpy
+$ pip install matplotlib
+$ pip install pyparsing==2.4.7
+$ pip install pyimgur
 
 ## Steps to run the bot locally
 * Install your desired version of Python on your local system if not installed already.
