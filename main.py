@@ -43,6 +43,10 @@ SESSION_ID = os.environ['SESSION_ID']
 session_client = dialogflow.SessionsClient()
 session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
 
+# Mongo CLient
+DATABASE_URL = os.environ['DATABASE_URL']
+myclient = MongoClient(DATABASE_URL)
+
 
 def send_message(message_body):
     # send text message from bot to user
@@ -75,23 +79,29 @@ def reply():
     print("HELLLLLOCOCOCOCOCO")
     message = request.form.get('Body').lower()
     
-    DATABASE_URL = os.environ['DATABASE_URL']
-    myclient = MongoClient(DATABASE_URL)
     
+    # ____________Mongo DB Insertion_____________
     db = myclient["wcdatabase"]
     collection = db["test"]
     records = {
-        "record":{
-            "_id": 10,
-            "name": "Dange",
-            "Roll No": "201080909",
-            "Branch": "IT",
-        }
+        "_id": 12,
+        "name": "Raj",
+        "Roll No": "1274849",
+        "Branch": "CIVIL",
     }
+    # for record in records.values():
+    # collection.insert_one(records)
+    # print(records["_id"])
     
-    for record in records.values():
-        collection.insert_one(record)
+    # ____________Mongo DB Updation_____________
+    # collection.update_one({ 'name': 'Shubham' }, { "$set": { 'Branch': 'CSE' }})
     
+    # ____________Mongo DB Finding_____________
+    result  = collection.find_one({ '_id': 11 })
+    print(result)
+    
+    # ____________Mongo DB Deletion_____________
+    collection.delete_one({ 'name': 'Anshul'})
     
     # print(request)
     # res = request.get_json(force=True)
