@@ -1,7 +1,5 @@
-venv
 .env
-__pycache__
+*.env
 dialogflow_private_key.json
 venv
-
-
+__pycache__
