@@ -104,28 +104,34 @@ def reply():
     }
     
     # for record in records.values():
-    collection.insert_one(records)
+    # collection.insert_one(records)
     # print(records["_id"])
+
     
     # ____________Mongo DB Updation_____________
     # collection.update_one({ 'name': 'Shubham' }, { "$set": { 'Branch': 'CSE' }})
     
+    
     # ____________Mongo DB Finding_____________
     result  = collection.find_one({ '_id': ObjectId("635a3609b13d774162212cb2") })
-    print(result)
+    print(result["quizzes"]['quiz-1'])
+    
     
     # ____________Mongo DB Deletion_____________
     collection.delete_one({ 'name': 'Anshul'})
     
+    
+    # ____________Dialogflow Fulfillment Trial_____________
     # print(request)
     # res = request.get_json(force=True)
     # print("INNINININ")
     # print(res)
     # print(request.headers)
     # agent_df = WebhookClient(request.headers)
-    
     # agent_df.handle_request(handler_df)
     # image = Image('https://www.sekirothegame.com/content/dam/atvi/sekiro/about/TGA-logo.png')
+    
+    
     
     if message:
         text_input = dialogflow.types.TextInput(text=message, language_code=DIALOGFLOW_LANGUAGE_CODE)
