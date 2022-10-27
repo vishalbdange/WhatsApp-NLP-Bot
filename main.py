@@ -1,6 +1,6 @@
 # Neel stuff
-from typing import Dict
-from dialogflow_fulfillment import Image, WebhookClient
+# from typing import Dict
+# from dialogflow_fulfillment import Image, WebhookClient
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import numpy as np
@@ -68,12 +68,13 @@ IMGUR_CLIENT_ID = os.environ['IMGUR_CLIENT_ID']
 imgurclient = pyimgur.Imgur(IMGUR_CLIENT_ID)
 
 
-def send_message(message_body):
+def send_message(message_body,imageUrl):
     # send text message from bot to user
     text_message = client.messages.create(
         body=message_body,
         from_='whatsapp:+14155238886',
-        to='whatsapp:+91'+phone_number
+        to='whatsapp:+919960855675',
+        media_url=imageUrl
     )
 
 # @app.route('/message', methods=['GET', 'POST'])
@@ -93,8 +94,8 @@ def respond(message):
     return str(response)
 
 
-def handler_df(agent_df: WebhookClient) -> None:
-    agent_df.add('How are you feeling today?')
+# def handler_df(agent_df: WebhookClient) -> None:
+#     agent_df.add('How are you feeling today?')
     
 
 #________________ Vishal Video API _________________
@@ -236,7 +237,8 @@ def reply():
             # print("Detected intent confidence:", response.query_result.intent_detection_confidence)
             # print("Fulfillment text:", response.query_result.fulfillment_text)
             print(response.query_result.fulfillment_text)
-            index(response.query_result.query_text)
+            # index(response.query_result.query_text)
+            send_message(response.query_result.fulfillment_text,str(uploaded_image.link))
             return respond(response.query_result.fulfillment_text) 
         except InvalidArgument:
             raise
