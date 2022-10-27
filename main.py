@@ -2,6 +2,7 @@
 from typing import Dict
 from dialogflow_fulfillment import Image, WebhookClient
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 # import flask for setting up the web server
 from flask import Flask, request
@@ -84,20 +85,33 @@ def reply():
     db = myclient["wcdatabase"]
     collection = db["test"]
     records = {
-        "_id": 12,
+        # "_id": 12,
         "name": "Raj",
         "Roll No": "1274849",
         "Branch": "CIVIL",
+        "quizzes": {
+            "quiz-1": 6,
+            "quiz-2": 4,
+            "quiz-3": 10,
+            "quiz-4": 3,
+            "quiz-5": 7,
+            "quiz-6": 8,
+            "quiz-7": 1,
+            "quiz-8": 5,
+            "quiz-9": 2,
+            "quiz-10": 9,
+        }
     }
+    
     # for record in records.values():
-    # collection.insert_one(records)
+    collection.insert_one(records)
     # print(records["_id"])
     
     # ____________Mongo DB Updation_____________
     # collection.update_one({ 'name': 'Shubham' }, { "$set": { 'Branch': 'CSE' }})
     
     # ____________Mongo DB Finding_____________
-    result  = collection.find_one({ '_id': 11 })
+    result  = collection.find_one({ '_id': ObjectId("635a3609b13d774162212cb2") })
     print(result)
     
     # ____________Mongo DB Deletion_____________
