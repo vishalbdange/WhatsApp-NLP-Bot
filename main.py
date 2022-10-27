@@ -1,5 +1,5 @@
 # import flask for setting up the web server
-from flask import Flask, request,Response,current_app
+from flask import Flask, request,Response
 
 # import the Client function from the helper library
 from twilio.rest import Client
@@ -41,7 +41,7 @@ SESSION_ID = os.environ['SESSION_ID']
 session_client = dialogflow.SessionsClient()
 session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
 
-def send_message(message_body,thumbnail):
+def send_youtube_result(message_body,thumbnail):
     # send text message from bot to user
     text_message = client.messages.create(
         body=message_body,
@@ -66,7 +66,7 @@ def respond(message):
     return str(response )
 
  
-def index(query_text):
+def get_youtube_results_for(query_text):
     search_url = 'https://www.googleapis.com/youtube/v3/search'
     video_url = 'https://www.googleapis.com/youtube/v3/videos'
 
@@ -93,7 +93,7 @@ def index(query_text):
         'key' : os.environ['YOUTUBE_API_KEY'],
         'id' : ','.join(video_ids),
         'part' : 'snippet,contentDetails',
-        'maxResults' : 3
+        'maxResults' : 4
     }
 
     r = requests.get(video_url, params=video_params)
@@ -111,7 +111,7 @@ def index(query_text):
         
     print(videos)
     for video in videos:
-        send_message(video['url'],video['thumbnail'])
+        send_youtube_result(video['url'],video['thumbnail'])
 
 
 @app.route('/reply', methods=['POST'])
@@ -128,7 +128,7 @@ def reply():
             # print("Detected intent confidence:", response.query_result.intent_detection_confidence)
             # print("Fulfillment text:", response.query_result.fulfillment_text)
 
-            index(response.query_result.query_text)
+            get_youtube_results_for(response.query_result.query_text)
             return respond(response.query_result.fulfillment_text)
  
         except InvalidArgument:
