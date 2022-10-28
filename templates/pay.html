@@ -1,0 +1,19 @@
+<p> Payment Container </p>
+<form action="/success" method="POST">
+<script
+    src="https://checkout.razorpay.com/v1/checkout.js"
+    data-key="{{razorpay_key}}"
+    data-amount="{{payment['amount']}}"
+    data-currency="{{payment['currency']}}"
+    data-order_id="{{payment['id']}}"
+    data-buttontext="Pay with Razorpay"
+    data-name="ViKiNgS"
+    data-description="Payment For Course: {{payment['notes']['course']}}"
+    data-image="https://example.com/your_logo.jpg"
+    data-prefill.name="{{payment['notes']['name']}}"
+    data-prefill.email="{{payment['notes']['email']}}"
+    data-prefill.contact="{{payment['notes']['contact']}}"
+    data-theme.color="#F37254"
+></script>
+<input type="hidden" custom="Hidden Element" name="hidden">
+</form>

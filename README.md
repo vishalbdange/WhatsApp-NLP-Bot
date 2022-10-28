@@ -7,6 +7,7 @@ $ pip install numpy
 $ pip install matplotlib
 $ pip install pyparsing==2.4.7
 $ pip install pyimgur
+$ pip install razorpay
 
 ## Steps to run the bot locally
 * Install your desired version of Python on your local system if not installed already.

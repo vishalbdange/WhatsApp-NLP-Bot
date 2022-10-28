@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Payment Form </title>
+</head>
+<body>
+    <form method="POST" action="/pay">
+        <h2> Please Enter The Details </h2>
+        <select name="course" id="course" required>
+            <option value="" disabled selected hidden> Select The Course You Want To Register For </option>
+            {%for i in range(len)%}
+                <option value="{{courses[i]}}">{{courses[i]}} </option>
+            {%endfor%}
+        </select>
+        <button type="submit" class="register continue">Continue For Payment</button>
+    </form>
+</body>
+</html>
