@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 import numpy as np
 import matplotlib.pyplot as plt
 import pyimgur
-
+from video import youtube
 # Vishal stuff
 import requests
 
@@ -54,14 +54,17 @@ SESSION_ID = os.environ['SESSION_ID']
 session_client = dialogflow.SessionsClient()
 session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
 
-def send_message(message_body,thumbnail):
+def send_message(message_body,imageUrl):
     # send text message from bot to user
     text_message = client.messages.create(
         body=message_body,
         from_='whatsapp:+14155238886',
         to='whatsapp:+919960855675',
-        media_url=thumbnail
+        media_url=imageUrl
     )
+
+#importing youtube Videos 
+
 
 # Mongo CLient
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -94,53 +97,6 @@ def respond(message):
     
 
 #________________ Vishal Video API _________________
-def index(query_text):
-    search_url = 'https://www.googleapis.com/youtube/v3/search'
-    video_url = 'https://www.googleapis.com/youtube/v3/videos'
-
-    videos = []
-
-    search_params = {
-        'key' : os.environ['YOUTUBE_API_KEY'],
-        'q' : query_text,
-        'part' : 'snippet',
-        'maxResults' : 4,
-        'type' : 'video'
-    }
-
-    r = requests.get(search_url, params=search_params)
-
-    results = r.json()['items']
-
-    video_ids = []
-    for result in results:
-        video_ids.append(result['id']['videoId'])
-
-
-    video_params = {
-        'key' : os.environ['YOUTUBE_API_KEY'],
-        'id' : ','.join(video_ids),
-        'part' : 'snippet,contentDetails',
-        'maxResults' : 4
-    }
-
-    r = requests.get(video_url, params=video_params)
-    results = r.json()['items']
- 
-    for result in results:
-        video_data = {
-            'id' : result['id'],
-            'url' : f'https://www.youtube.com/watch?v={ result["id"] }',
-            'thumbnail' : result['snippet']['thumbnails']['high']['url'],
-            'duration' : 0,
-            'title' : result['snippet']['title'],
-        }
-        videos.append(video_data)
-        
-    print(videos)
-    for video in videos:
-        send_message(video['url'],video['thumbnail'])
-
 
 @app.route('/reply', methods=['POST'])
 def reply():
@@ -237,8 +193,10 @@ def reply():
             # print("Detected intent confidence:", response.query_result.intent_detection_confidence)
             # print("Fulfillment text:", response.query_result.fulfillment_text)
             print(response.query_result.fulfillment_text)
-            # index(response.query_result.query_text)
-            send_message(response.query_result.fulfillment_text,str(uploaded_image.link))
+            videos = youtube(response.query_result.query_text)
+            print(videos)
+            for video in videos:
+                send_message(video['url'],video['thumbnail'])
             return respond(response.query_result.fulfillment_text) 
         except InvalidArgument:
             raise
