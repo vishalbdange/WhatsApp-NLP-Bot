@@ -10,9 +10,13 @@ from utils.dialogflowQuery import dialogflow_query
 from pymongo import MongoClient
 
 # import flask for setting up the web server
-from flask import Flask, request
+from flask import Flask, request,Response
 
 import os
+
+#import requests to make API call
+import requests
+
 
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
