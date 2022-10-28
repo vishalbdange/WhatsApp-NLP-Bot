@@ -9,9 +9,16 @@ client = Client(account_sid, auth_token)
 
 def send_message(message_body,imageUrl):
     # send text message from bot to user
-    text_message = client.messages.create(
-        body=message_body,
-        from_='whatsapp:+14155238886',
-        to='whatsapp:+919960855675',
-        media_url=imageUrl
-    )
+    if imageUrl == '':
+        text_message = client.messages.create(
+            body=message_body,
+            from_='whatsapp:+14155238886',
+            to='whatsapp:+919960855675',
+        )
+    else:
+        text_message = client.messages.create(
+            body=message_body,
+            from_='whatsapp:+14155238886',
+            to='whatsapp:+919960855675',
+            media_url=imageUrl
+        )
