@@ -32,9 +32,9 @@ db = mongoClient["wcdatabase"]
 @app.route('/reply', methods=['POST'])
 def reply():
     print("HELLLLLOCOCOCOCOCO")
-    return message message = request.form.get('Body').lower()
+    message = request.form.get('Body').lower()
+    workflow(message)
     
-def workflow():
+def workflow(message):
     if dialogflow_needed:
         
-        return 
