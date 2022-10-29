@@ -32,8 +32,7 @@ def dialogflow_query(message):
         # print(response.query_result.fulfillment_text)
         # index(response.query_result.query_text)
         # mediaUrl = student_progress(db)
-        
-        send_message(response.query_result.fulfillment_text,'_')
-        return respond(response.query_result.fulfillment_text) 
+        # send_message(response.query_result.fulfillment_text,'_')
+        return response 
     except InvalidArgument:
         raise

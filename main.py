@@ -28,6 +28,7 @@ DATABASE_URL = os.environ['DATABASE_URL']
 mongoClient = MongoClient(DATABASE_URL)
 db = mongoClient["wcdatabase"]
 
+quiz_time = False
 
 @app.route('/reply', methods=['POST'])
 def reply():
@@ -36,5 +37,17 @@ def reply():
     workflow(message)
     
 def workflow(message):
-    if dialogflow_needed:
+    if not quiz_time:
+        response_df = dialogflow_query(message)
+        
+        if response_df.query_result.intent.display_name == 'Video':
+            result_videos = youtube(response_df.query_result.query_text)
+            for video in result_videos:
+                send_message(video['url'],video['thumbnail'])
+            return 
+        
+        if response_df.query_result.intent.display_name == 'Parent':
+            # if response_df.query_result.parameters
+            
+
         
