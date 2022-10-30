@@ -2,7 +2,7 @@
 from pymongo import MongoClient
 from utils.visualisation import student_progress
 from utils.video import youtube
-from.utils.sendMessage import send_message
+from utils.sendMessage import send_message
 from utils.quiz import quiz_bot
 from utils.dialogflowQuery import dialogflow_query
 
@@ -35,19 +35,26 @@ def reply():
     print("HELLLLLOCOCOCOCOCO")
     message = request.form.get('Body').lower()
     workflow(message)
+    return ''
     
 def workflow(message):
     if not quiz_time:
         response_df = dialogflow_query(message)
         
-        if response_df.query_result.intent.display_name == 'Video':
+        if response_df.query_result.intent.display_name == 'Videos':
             result_videos = youtube(response_df.query_result.query_text)
+            print(result_videos)
             for video in result_videos:
-                send_message(video['url'],video['thumbnail'])
-            return 
+                send_message(video['url'], video['thumbnail'])
+            return ''
         
         if response_df.query_result.intent.display_name == 'Parent':
-            # if response_df.query_result.parameters
-            
-
+            print(response_df.query_result.parameters)
+            picture_url = student_progress(db)
+            send_message(response_df.query_result.fulfillment_text, picture_url)
+            return 
         
+        else:
+            send_message(response_df.query_result.fulfillment_text,'')
+            
+    return 

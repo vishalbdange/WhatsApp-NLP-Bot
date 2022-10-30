@@ -2,7 +2,13 @@ import os
 import dialogflow
 from google.api_core.exceptions import InvalidArgument
 from twilio.twiml.messaging_response import MessagingResponse
-from sendMessage import send_message
+from utils.sendMessage import send_message
+from dotenv import load_dotenv
+load_dotenv()
+
+# set Google Application credentials
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'dialogflow_private_key.json' # absolute path of JSON file
+
 
 # set Dialogflow project credentials
 DIALOGFLOW_PROJECT_ID = os.environ['DIALOGFLOW_PROJECT_ID']
@@ -11,8 +17,6 @@ SESSION_ID = os.environ['SESSION_ID']
 session_client = dialogflow.SessionsClient()
 session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
 
-# set Google Application credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'dialogflow_private_key.json' # absolute path of JSON file
 
 def respond(message):
     response = MessagingResponse()
@@ -32,7 +36,7 @@ def dialogflow_query(message):
         # print(response.query_result.fulfillment_text)
         # index(response.query_result.query_text)
         # mediaUrl = student_progress(db)
-        # send_message(response.query_result.fulfillment_text,'_')
+        respond(response.query_result.fulfillment_text)
         return response 
     except InvalidArgument:
         raise

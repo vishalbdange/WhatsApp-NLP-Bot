@@ -1,4 +1,4 @@
-from sendMessage import send_message
+from utils.sendMessage import send_message
 
 def quiz_bot(db, quizID, questionNumber):
     collection = db["course"]
