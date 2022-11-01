@@ -1,5 +1,7 @@
 # Utils
+import json
 from pymongo import MongoClient
+
 from utils.visualisation import student_progress
 from utils.video import youtube
 # Extra imports
@@ -31,6 +33,7 @@ load_dotenv()
 import dialogflow
 from google.api_core.exceptions import InvalidArgument
 
+from deep_translator import GoogleTranslator
 
 # creating the Flask object
 app = Flask(__name__)
@@ -81,22 +84,40 @@ def respond(message):
     response.message(message)
     return str(response )
 
+def google_search(query_text):
+    url='https://customsearch.googleapis.com/customsearch/v1'
+    cx='21f70c2b29d284393'
+    search_key = os.environ['GOOGLE_API_KEY']
+    parameters = {
+        "q" : query_text,
+        "cx" : cx,
+        'key' : search_key,
+       
+    }
+    page=requests.request("GET",url,params=parameters)
+    results = json.loads(page.text)
+    # print(results['items'])
+    return [results['items'][3],results['items'][2],results['items'][1],results['items'][0]]
+
 
 @app.route('/reply', methods=['POST'])
 def reply():
     print("HELLLLLOCOCOCOCOCO")
     
     message = request.form.get('Body').lower()
+    print(google_search(message))
 
     # _______________________ Keval Code ______________________
     if message :
         print(message)
+        translated = GoogleTranslator(source="auto", target="en").translate(message)
+        print(translated)
         lang_code = langid.classify(message)[0]
         print(lang_code)
         if(lang_code != 'hi' and lang_code != 'mr'):
             lang_code = 'en'
         print(lang_code)
-        text_input = dialogflow.types.TextInput(text=message, language_code=lang_code)
+        text_input = dialogflow.types.TextInput(text=translated, language_code='en')
         query_input = dialogflow.types.QueryInput(text=text_input)
         try:
             response = session_client.detect_intent(session=session, query_input=query_input)
@@ -113,7 +134,10 @@ def reply():
             # for video in videos:
             #     video_flag = True
                 # send_message(video['url'],video['thumbnail'])
-            send_text_message(response.query_result.fulfillment_text)
+            web_search_results = google_search(response.query_result.query_text)
+            send_text_message(GoogleTranslator(source="auto", target=lang_code).translate(response.query_result.fulfillment_text))
+            # for result in web_search_results:
+            #     send_text_message(result['snippet'] + '\n' + result['link'])
             return ""
         except InvalidArgument:
             raise
