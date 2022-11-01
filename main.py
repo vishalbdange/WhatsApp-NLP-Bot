@@ -8,6 +8,7 @@ from utils.dialogflowQuery import dialogflow_query
 
 # Extra imports
 from pymongo import MongoClient
+import datetime
 
 # import flask for setting up the web server
 from flask import Flask, request
@@ -28,16 +29,43 @@ DATABASE_URL = os.environ['DATABASE_URL']
 mongoClient = MongoClient(DATABASE_URL)
 db = mongoClient["wcdatabase"]
 
-quiz_time = False
+quiz_time = True
+quiz_count = 1
+quiz_answer = ''
 
 @app.route('/reply', methods=['POST'])
 def reply():
+    user  = db['test'].find_one({ '_id':request.form.get('WaId') })
+    quiz_count  = user['quiz_count']
     print("HELLLLLOCOCOCOCOCO")
     message = request.form.get('Body').lower()
+    if quiz_time and quiz_count == 1:
+        quiz_answer = quiz_bot(db, 'M1', quiz_count )
+        print('ANSWER ' + quiz_answer)
+        quiz_count = quiz_count + 1
+        db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'quiz_count': quiz_count }})
+        print('COUNT ' + str(quiz_count))
+        return ''
+    
     workflow(message)
     return ''
     
+def quiz_chat(answer):
+    global quiz_count
+    if answer:
+        print('SEE THIS' + answer)
+        quiz_count = quiz_count + 1
+        print('COUNT ' + str(quiz_count))
+        
+        quiz_bot(db, 'M1', quiz_count)
+    # else:
+        # quiz_time = False
+        
+
 def workflow(message):
+    if quiz_time:
+        quiz_chat(message)
+        
     if not quiz_time:
         response_df = dialogflow_query(message)
         
@@ -55,6 +83,10 @@ def workflow(message):
             return 
         
         else:
+            # quiz_bot(db, 'M1')
+            now = datetime.datetime.now()
+            print(now.year, now.month, now.day, now.hour, now.minute, now.second)
+            print(type(now.year), type(now.month), type(now.day), type(now.hour), type(now.minute), type(now.second))
             send_message(response_df.query_result.fulfillment_text,'')
             
     return 
