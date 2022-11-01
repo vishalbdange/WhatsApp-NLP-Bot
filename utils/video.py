@@ -47,5 +47,5 @@ def youtube(query_text):
         }
         videos.append(video_data)
         
-    print(videos)
+    # print(videos)
     return videos
