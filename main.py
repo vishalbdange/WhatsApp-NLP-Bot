@@ -1,268 +1,109 @@
-# Neel stuff
-# from typing import Dict
-# from dialogflow_fulfillment import Image, WebhookClient
+# Utils
 from pymongo import MongoClient
-from bson.objectid import ObjectId
-import numpy as np
-import matplotlib.pyplot as plt
-import pyimgur
+from utils.visualisation import student_progress
+from utils.video import youtube
+from utils.sendMessage import send_message
+from utils.quiz import quiz_bot
+from utils.dialogflowQuery import dialogflow_query
 
-# Vishal stuff
-import requests
+# Extra imports
+from pymongo import MongoClient
+import datetime
 
 # import flask for setting up the web server
 from flask import Flask, request
 
-# import the Client function from the helper library
-from twilio.rest import Client
-
-# import Messaging Response for responding to incoming messages
-from twilio.twiml.messaging_response import MessagingResponse
-
-# import OS for environment variables
 import os
 
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
 load_dotenv()
 
-# import dialogflow for adding conversational AI
-import dialogflow
-from google.api_core.exceptions import InvalidArgument
-
 
 # creating the Flask object
 app = Flask(__name__)
 
-# set Google Application credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'dialogflow_private_key.json' # absolute path of JSON file
-
-# set Twilio user credentials
-account_sid = os.environ['TWILIO_ACCOUNT_SID']
-auth_token = os.environ['TWILIO_AUTH_TOKEN']
-phone_number = os.environ['YOUR_WHATSAPP_NUMBER']
-client = Client(account_sid, auth_token)
-
-# set Dialogflow project credentials
-DIALOGFLOW_PROJECT_ID = os.environ['DIALOGFLOW_PROJECT_ID']
-DIALOGFLOW_LANGUAGE_CODE = 'en'
-SESSION_ID = os.environ['SESSION_ID']
-session_client = dialogflow.SessionsClient()
-session = session_client.session_path(DIALOGFLOW_PROJECT_ID, SESSION_ID)
-
-# def send_message(message_body,thumbnail):
-#     # send text message from bot to user
-#     text_message = client.messages.create(
-#         body=message_body,
-#         from_='whatsapp:+14155238886',
-#         to='whatsapp:+919870613280',
-#         media_url=thumbnail
-#     )
-
-def send_message(message_body,imageUrl):
-    # send text message from bot to user
-    if imageUrl == '':
-        text_message = client.messages.create(
-            body=message_body,
-            from_='whatsapp:+14155238886',
-            to='whatsapp:+919870613280',
-        )
-    else:
-        text_message = client.messages.create(
-            body=message_body,
-            from_='whatsapp:+14155238886',
-            to='whatsapp:+919870613280',
-            media_url=imageUrl
-        )
 
 # Mongo CLient
 DATABASE_URL = os.environ['DATABASE_URL']
-myclient = MongoClient(DATABASE_URL)
+mongoClient = MongoClient(DATABASE_URL)
+db = mongoClient["wcdatabase"]
 
-# IMGUR client
-IMGUR_CLIENT_ID = os.environ['IMGUR_CLIENT_ID']
-imgurclient = pyimgur.Imgur(IMGUR_CLIENT_ID)
+quiz_time = True
 
-
-# def send_message(message_body,imageUrl):
-#     # send text message from bot to user
-#     text_message = client.messages.create(
-#         body=message_body,
-#         from_='whatsapp:+14155238886',
-#         to='whatsapp:+919870613280',
-#         media_url=imageUrl
-#     )
-
-# @app.route('/message', methods=['GET', 'POST'])
-# def message():
-#     text_to_be_analyzed = "Cricket"
-#     text_input = dialogflow.types.TextInput(text=text_to_be_analyzed, language_code=DIALOGFLOW_LANGUAGE_CODE)
-#     query_input = dialogflow.types.QueryInput(text=text_input)
-#     try:
-#         response = session_client.detect_intent(session=session, query_input=query_input)
-#     except InvalidArgument:
-#         raise   
-
-def respond(message):
-    response = MessagingResponse()
-    response.message(message)
-    # print(str(response))
-    return str(response)
-
-
-# def handler_df(agent_df: WebhookClient) -> None:
-#     agent_df.add('How are you feeling today?')
-    
-
-#________________ Vishal Video API _________________
-def index(query_text):
-    search_url = 'https://www.googleapis.com/youtube/v3/search'
-    video_url = 'https://www.googleapis.com/youtube/v3/videos'
-
-    videos = []
-
-    search_params = {
-        'key' : os.environ['YOUTUBE_API_KEY'],
-        'q' : query_text,
-        'part' : 'snippet',
-        'maxResults' : 4,
-        'type' : 'video'
-    }
-
-    r = requests.get(search_url, params=search_params)
-
-    results = r.json()['items']
-
-    video_ids = []
-    for result in results:
-        video_ids.append(result['id']['videoId'])
-
-
-    video_params = {
-        'key' : os.environ['YOUTUBE_API_KEY'],
-        'id' : ','.join(video_ids),
-        'part' : 'snippet,contentDetails',
-        'maxResults' : 3
-    }
-
-    r = requests.get(video_url, params=video_params)
-    results = r.json()['items']
- 
-    for result in results:
-        video_data = {
-            'id' : result['id'],
-            'url' : f'https://www.youtube.com/watch?v={ result["id"] }',
-            'thumbnail' : result['snippet']['thumbnails']['high']['url'],
-            'duration' : 0,
-            'title' : result['snippet']['title'],
-        }
-        videos.append(video_data)
-        
-    # print(videos)
-    for video in videos:
-        send_message(video['url'],video['thumbnail'])
-
-
-@app.route('/reply', methods=['POST'])
+@app.route('/', methods=['POST'])
 def reply():
-    # print("HELLLLLOCOCOCOCOCO")
-    message = request.form.get('Body').lower()
-    
-    
-    # ____________Mongo DB Insertion_____________
-    # db = myclient["wcdatabase"]
-    # collection = db["test"]
-    # records = {
-    #     # "_id": 12,
-    #     "name": "Karan",
-    #     "Roll No": "1274849",
-    #     "Branch": "IT",
-    #     "quizzes": {
-    #         "quiz-1": 6,
-    #         "quiz-2": 4,
-    #         "quiz-3": 10,
-    #         "quiz-4": 3,
-    #         "quiz-5": 7,
-    #         "quiz-6": 8,
-    #         "quiz-7": 1,
-    #         "quiz-8": 5,
-    #         "quiz-9": 2,
-    #         "quiz-10": 9,
-    #     },
-    #     "trial": [7,8,3,6,1,10,9,2,4,5]
-    # }
-    
-    # for record in records.values():
-    # collection.insert_one(records)
-    # print(records["_id"])
+    global quiz_time
+    user  = db['test'].find_one({ '_id':request.form.get('WaId') })
+    quiz_count = user['quiz_count']
+    print("HELLLLLOCOCOCOCOCO")
+    # message = request.form.get('Body').lower()
+    if quiz_time and quiz_count == 0:
+        quiz_initial(user, quiz_count)
+        return ''
 
+    workflow(request)
+    return ''
     
-    # ____________Mongo DB Updation_____________
-    # collection.update_one({ 'name': 'Shubham' }, { "$set": { 'Branch': 'CSE' }})
-    # collection.update_one({ '_id': ObjectId("635a3e93abe65112ae6dd603")}, { "$push": { 'trial': 100}})
-    
-    
-    # ____________Mongo DB Finding_____________
-    # result  = collection.find_one({ '_id': ObjectId("635a3e93abe65112ae6dd603") })
-    # print(result["quizzes"]['quiz-1'])
-    # quiz_marks = [result["quizzes"]['quiz-1'], result["quizzes"]['quiz-2']]
-    # print(quiz_marks)
-    # print(result["trial"])
-    
-    
-    # ____________Mongo DB Deletion_____________
-    # collection.delete_one({ 'name': 'Anshul'})
-    
-    
-    # ____________Dialogflow Fulfillment Trial_____________
-    # print(request)
-    # res = request.get_json(force=True)
-    # print("INNINININ")
-    # print(res)
-    # print(request.headers)
-    # agent_df = WebhookClient(request.headers)
-    # agent_df.handle_request(handler_df)
-    # image = Image('https://www.sekirothegame.com/content/dam/atvi/sekiro/about/TGA-logo.png')
-    
-    
-    # ____________MatPlotLib & IMGUR Trial_____________
-    # student  = collection.find_one({ '_id': ObjectId("635a40cdcb5832c943b1804f")})
-    # student_marks = student["trial"]
-    # print(student_marks)
-    
-    # plt.barh(["Quiz-1", "Quiz-2", "Quiz-3", "Quiz-4", "Quiz-5", "Quiz-6", "Quiz-7", "Quiz-8", "Quiz-9", "Quiz-10"], student_marks, align="center", label="Student Progress")
-    # plt.legend()
-    # plt.ylabel('Quizzes')
-    # plt.xlabel('Marks')
-    # plt.title('Progress of Student ID: {}'.format(student["_id"]))
-    # plt.savefig('studentplot.png')
-    
-    # uploaded_image = imgurclient.upload_image('studentplot.png', title="Student Progress")
-    # print(uploaded_image.link)
-    
-    
-    
-    # _______________________ Keval Code ______________________
-    if message:
-        text_input = dialogflow.types.TextInput(text=message, language_code=DIALOGFLOW_LANGUAGE_CODE)
-        query_input = dialogflow.types.QueryInput(text=text_input)
-        try:
-            response = session_client.detect_intent(session=session, query_input=query_input)
-            print("Query text:", response.query_result.query_text)
-            print("Detected intent:", response.query_result.intent.display_name)
-            print("Detected intent confidence:", response.query_result.intent_detection_confidence)
-            print("Fulfillment text:", response.query_result.fulfillment_text)
-            print(response.query_result.fulfillment_text)
-            # index(response.query_result.query_text)
-            # send_message(response.query_result.fulfillment_text,str(uploaded_image.link))
-            send_message(response.query_result.fulfillment_text,"")
-            return respond(response.query_result.fulfillment_text) 
-        except InvalidArgument:
-            raise
+def quiz_initial(user, quiz_count):
+    quiz_count = quiz_count + 1
+    quiz_bot(db, 'M1', quiz_count)
+    db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'quiz_count': quiz_count }})
+    print('COUNT ' + str(quiz_count))
+    return ''
+        
 
-
-
-# vikingswc321
-# Vikings@123
+def quiz_chat(user, user_answer):
+    global quiz_time
+    quiz_count = user['quiz_count']
+    quiz_count = quiz_count + 1
+    db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'quiz_count': quiz_count }})
+    print(quiz_count)        
+    previous_answer = quiz_bot(db, 'M1', quiz_count)
+    if user_answer == previous_answer:
+        quiz_marks = user['quizzes']['M1'] + 2
+        print(quiz_marks)
+        db['test'].update_one({'_id':request.form.get('WaId')}, { "$set": { 'quizzes.M1': quiz_marks}})
+    if quiz_count == 6 or quiz_count > 6:
+        quiz_time = False
+        db['test'].update_one({'_id':request.form.get('WaId') }, { "$set": { 'quiz_count': 0 }})
+        send_message('Your quiz is over!','')
+        return ''
+    else:
+        return ''
 
         
+
+def workflow(request):
+    global quiz_time
+    if quiz_time:
+        user = db['test'].find_one({ '_id':request.form.get('WaId') })
+        quiz_answer = db['course']
+        quiz_chat(user, request.form.get('Body'))
+        return ''
+        
+    if not quiz_time:
+        message = request.form.get('Body').lower()
+        response_df = dialogflow_query(message)
+        
+        if response_df.query_result.intent.display_name == 'Videos':
+            result_videos = youtube(response_df.query_result.query_text)
+            print(result_videos)
+            for video in result_videos:
+                send_message(video['url'], video['thumbnail'])
+            return ''
+        
+        if response_df.query_result.intent.display_name == 'Parent':
+            print(response_df.query_result.parameters)
+            picture_url = student_progress(db)
+            send_message(response_df.query_result.fulfillment_text, picture_url)
+            return ''
+        
+        else:
+            # quiz_bot(db, 'M1')
+            now = datetime.datetime.now()
+            print(now.year, now.month, now.day, now.hour, now.minute, now.second)
+            print(type(now.year), type(now.month), type(now.day), type(now.hour), type(now.minute), type(now.second))
+            send_message(response_df.query_result.fulfillment_text,'')
+            
+    return ''
