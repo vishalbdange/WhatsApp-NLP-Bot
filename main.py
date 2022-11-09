@@ -104,6 +104,6 @@ def workflow(request):
             # now = datetime.datetime.now()
             # print(now.year, now.month, now.day, now.hour, now.minute, now.second)
             # print(type(now.year), type(now.month), type(now.day), type(now.hour), type(now.minute), type(now.second))
-            send_message(response_df.query_result.fulfillment_text,'')
+            send_message(str(request),'')
             
     return ''
