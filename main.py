@@ -3,8 +3,10 @@ from pymongo import MongoClient
 from utils.visualisation import student_progress
 from utils.video import youtube
 from utils.sendMessage import send_message
-from utils.quiz import quiz_bot
+# from utils.quiz import quiz_bot
 from utils.dialogflowQuery import dialogflow_query
+from api.text import sendText
+from api.buttons import sendButtons
 
 # Extra imports
 from pymongo import MongoClient
@@ -31,7 +33,7 @@ db = mongoClient["wcdatabase"]
 
 quiz_time = True
 
-@app.route('/reply', methods=['POST'])
+@app.route('/', methods=['POST'])
 def reply():
     global quiz_time
     user  = db['test'].find_one({ '_id':request.form.get('WaId') })
@@ -47,11 +49,27 @@ def reply():
     
 def quiz_initial(user, quiz_count):
     quiz_count = quiz_count + 1
-    quiz_bot(db, 'M1', quiz_count)
+    quiz_bot2(db, 'M1', quiz_count)
     db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'quiz_count': quiz_count }})
     print('COUNT ' + str(quiz_count))
     return ''
         
+
+def quiz_bot2(db, quizID, questionNumber):
+    collection = db["course"]
+    quiz  = collection.find_one({ '_id': quizID })  
+    questionNumberString = str(questionNumber)  
+    if questionNumber > 0 and questionNumber < 6:
+        # send_message(quiz[questionNumberString]['question'], '')
+        # options = '\n' + quiz[questionNumberString]['A'] + '\n' + quiz[questionNumberString]['B'] + '\n' + quiz[questionNumberString]['C'] + '\n' + quiz[questionNumberString]['D'] + '\n'
+        # send_message(options, '')
+        sendButtons(request.form.get('WaId'), quiz, questionNumberString)
+        
+    if questionNumber > 1 and questionNumber < 7:
+        questionNumberString = str(questionNumber - 1)  
+        return quiz[questionNumberString]['answer']
+    else:
+        return ''
 
 def quiz_chat(user, user_answer):
     global quiz_time
@@ -59,7 +77,7 @@ def quiz_chat(user, user_answer):
     quiz_count = quiz_count + 1
     db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'quiz_count': quiz_count }})
     print(quiz_count)        
-    previous_answer = quiz_bot(db, 'M1', quiz_count)
+    previous_answer = quiz_bot2(db, 'M1', quiz_count)
     if user_answer == previous_answer:
         quiz_marks = user['quizzes']['M1'] + 2
         print(quiz_marks)
@@ -67,7 +85,7 @@ def quiz_chat(user, user_answer):
     if quiz_count == 6 or quiz_count > 6:
         quiz_time = False
         db['test'].update_one({'_id':request.form.get('WaId') }, { "$set": { 'quiz_count': 0 }})
-        send_message('Your quiz is over!','')
+        sendText(request.form.get('WaId'), 'Your quiz is over!')
         return ''
     else:
         return ''
@@ -104,6 +122,11 @@ def workflow(request):
             now = datetime.datetime.now()
             print(now.year, now.month, now.day, now.hour, now.minute, now.second)
             print(type(now.year), type(now.month), type(now.day), type(now.hour), type(now.minute), type(now.second))
-            send_message(response_df.query_result.fulfillment_text,'')
+            print(request.form.get('From'))
+            # send_message(request.form.get('From'), response_df.query_result.fulfillment_text,'')
+            sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
             
     return ''
+
+if __name__ == '__main__':
+    app.run(debug=False)
