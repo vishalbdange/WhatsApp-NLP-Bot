@@ -31,7 +31,7 @@ DATABASE_URL = os.environ['DATABASE_URL']
 mongoClient = MongoClient(DATABASE_URL)
 db = mongoClient["wcdatabase"]
 
-quiz_time = True
+quiz_time = False
 
 @app.route('/', methods=['POST'])
 def reply():
@@ -108,7 +108,7 @@ def workflow(request):
             result_videos = youtube(response_df.query_result.query_text)
             print(result_videos)
             for video in result_videos:
-                send_message(video['url'], video['thumbnail'])
+                sendText(request.form.get('WaId'), video['url'] + ' | ' + video['title'])
             return ''
         
         if response_df.query_result.intent.display_name == 'Parent':
