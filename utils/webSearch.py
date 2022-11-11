@@ -18,4 +18,8 @@ def google_search(query_text):
     page=requests.request("GET",url,params=parameters)
     results = json.loads(page.text)
     print(results['items'])
-    return [results['items'][3],results['items'][2],results['items'][1],results['items'][0]]
+    # return [results['items'][3],results['items'][2],results['items'][1],results['items'][0]]
+    
+    top_output =  [results['items'][3],results['items'][2],results['items'][1],results['items'][0]]
+    output = top_output[0]['snippet'] + '\n' + top_output[0]['link'] + '\n\n' + top_output[1]['snippet'] + '\n' + top_output[1]['link']
+    return output

@@ -5,6 +5,7 @@ from utils.video import youtube
 from utils.sendMessage import send_message
 # from utils.quiz import quiz_bot
 from utils.dialogflowQuery import dialogflow_query
+from utils.webSearch import google_search
 from api.text import sendText
 from api.buttons import sendButtons
 
@@ -101,7 +102,7 @@ def workflow(request):
         return ''
         
     if not quiz_time:
-        message = request.form.get('Body').lower()
+        message = request.form.get('Body').lower() # video on digimon
         response_df = dialogflow_query(message)
         
         if response_df.query_result.intent.display_name == 'Videos':
@@ -110,6 +111,10 @@ def workflow(request):
             for video in result_videos:
                 sendText(request.form.get('WaId'), video['url'] + ' | ' + video['title'])
             return ''
+        
+        if response_df.query_result.intent.display_name == 'WebSearch':
+            result_search = google_search(response_df.query_result.query_text)
+            sendText(request.form.get('WaId'), result_search)
         
         if response_df.query_result.intent.display_name == 'Parent':
             print(response_df.query_result.parameters)
