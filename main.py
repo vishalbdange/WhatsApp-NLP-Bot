@@ -4,6 +4,7 @@ from pymongo import MongoClient
 
 from utils.visualisation import student_progress
 from utils.video import youtube
+from utils.speech_to_text import speech_to_text
 from utils.web_search import google_search
 # Extra imports
 from pymongo import MongoClient
