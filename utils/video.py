@@ -1,5 +1,7 @@
 # import OS for environment variables
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # import requests
 import requests
