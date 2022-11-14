@@ -3,7 +3,7 @@ import json
 
 url = "https://iqwhatsapp.airtel.in:443/gateway/airtel-xchange/basic/whatsapp-manager/v1/session/send/interactive/buttons"
 
-def sendButtons(receiver, quiz, questionNumberString):
+def sendQuiz(receiver, quiz, questionNumberString):
     payload = json.dumps({
         "sessionId": "5792547f57a44b358d3f1425dc163b7f",
         "to": receiver,

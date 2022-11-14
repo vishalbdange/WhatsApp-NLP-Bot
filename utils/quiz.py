@@ -1,5 +1,5 @@
 from utils.sendMessage import send_message
-from api.buttons import sendButtons
+from api.quizButtons import sendQuiz
 
 def quiz_bot(db, quizID, questionNumber):
     collection = db["course"]
@@ -9,7 +9,7 @@ def quiz_bot(db, quizID, questionNumber):
         # send_message(quiz[questionNumberString]['question'], '')
         # options = '\n' + quiz[questionNumberString]['A'] + '\n' + quiz[questionNumberString]['B'] + '\n' + quiz[questionNumberString]['C'] + '\n' + quiz[questionNumberString]['D'] + '\n'
         # send_message(options, '')
-        sendButtons()
+        sendQuiz()
         
     if questionNumber > 1 and questionNumber < 7:
         questionNumberString = str(questionNumber - 1)  

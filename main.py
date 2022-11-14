@@ -1,13 +1,16 @@
 # Utils
-from pymongo import MongoClient
 from utils.visualisation import student_progress
 from utils.video import youtube
 from utils.sendMessage import send_message
 # from utils.quiz import quiz_bot
 from utils.dialogflowQuery import dialogflow_query
 from utils.webSearch import google_search
+
 from api.text import sendText
-from api.buttons import sendButtons
+from api.quizButtons import sendQuiz
+from api.oneButton import sendOneButton
+from api.twoButton import sendTwoButton
+from api.threeButton import sendThreeButton
 
 # Extra imports
 from pymongo import MongoClient
@@ -17,6 +20,8 @@ import datetime
 from flask import Flask, request
 
 import os
+import json
+import random
 
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
@@ -37,7 +42,46 @@ quiz_time = False
 @app.route('/', methods=['POST'])
 def reply():
     global quiz_time
+    message = request.form.get('Body').lower() # video on digimon
+    response_df = dialogflow_query(message)
+    
     user  = db['test'].find_one({ '_id':request.form.get('WaId') })
+    
+    if user == None and response_df.query_result.intent.display_name != 'Register' and message != "just exploring!":
+        # send button to register
+        # sendTwoButton(request.form.get('WaId'), "Welcome to our world of education", "register", "I want to register right now!", "surf",  "I am just here to surf and explore!")
+        welcome_text = ["Welcome to our world of education", 
+                        "It's a better place if you register today!",
+                        "Trust me! Registering with us will brighten your future", 
+                        "Vishal, the business tycoon recommends us, register now!"]
+        print(message)
+        sendTwoButton(request.form.get('WaId'), welcome_text[random.randint(0, 3)], ["register", "explore"], ["Register right now!", "Just exploring!"])
+        return ''
+    
+    if user == None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
+        db["test"].insert_one({ '_id':request.form.get('WaId') })
+        sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
+        return ''
+        
+    if user == None and message == "just exploring!":
+        sendText(request.form.get('WaId'), "Cool Carry on")
+        return ''
+        
+    if  user['name'] == '' and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
+        name_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('email.original'))
+        name = name_.split("\"")[1]
+        db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'name': name }})
+        sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
+        return ''
+        
+    if user['email'] == '' and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
+        email_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('person.original'))
+        email = email_.split("\"")[1]
+        db['test'].update_many({ '_id':request.form.get('WaId') }, { "$set": { 'email': email, 'trialDone': false, 'paymentDone': false }})
+        sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
+        return ''
+        
+    
     quiz_count = user['quiz_count']
     print("HELLLLLOCOCOCOCOCO")
     # message = request.form.get('Body').lower()
@@ -64,7 +108,7 @@ def quiz_bot2(db, quizID, questionNumber):
         # send_message(quiz[questionNumberString]['question'], '')
         # options = '\n' + quiz[questionNumberString]['A'] + '\n' + quiz[questionNumberString]['B'] + '\n' + quiz[questionNumberString]['C'] + '\n' + quiz[questionNumberString]['D'] + '\n'
         # send_message(options, '')
-        sendButtons(request.form.get('WaId'), quiz, questionNumberString)
+        sendQuiz(request.form.get('WaId'), quiz, questionNumberString)
         
     if questionNumber > 1 and questionNumber < 7:
         questionNumberString = str(questionNumber - 1)  
@@ -102,8 +146,8 @@ def workflow(request):
         return ''
         
     if not quiz_time:
-        message = request.form.get('Body').lower() # video on digimon
-        response_df = dialogflow_query(message)
+        # message = request.form.get('Body').lower() # video on digimon
+        # response_df = dialogflow_query(message)
         
         if response_df.query_result.intent.display_name == 'Videos':
             result_videos = youtube(response_df.query_result.query_text)
@@ -112,7 +156,7 @@ def workflow(request):
                 sendText(request.form.get('WaId'), video['url'] + ' | ' + video['title'])
             return ''
         
-        if response_df.query_result.intent.display_name == 'WebSearch':
+        if response_df.query_result.intent.display_name == 'WebSearch': #Google JEE datde
             result_search = google_search(response_df.query_result.query_text)
             sendText(request.form.get('WaId'), result_search)
         
@@ -129,6 +173,9 @@ def workflow(request):
             print(type(now.year), type(now.month), type(now.day), type(now.hour), type(now.minute), type(now.second))
             print(request.form.get('From'))
             # send_message(request.form.get('From'), response_df.query_result.fulfillment_text,'')
+            print(response_df.query_result.fulfillment_text)
+            print(response_df.query_result.intent.display_name)
+            print(request.form)
             sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
             
     return ''
