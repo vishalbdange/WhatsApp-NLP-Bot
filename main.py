@@ -1,34 +1,28 @@
 # Utils
-import json
-from pymongo import MongoClient
-
-from utils.visualisation import student_progress
-from utils.video import youtube
-from utils.speech_to_text import speech_to_text
-from utils.sendMessage import send_message
-# from utils.quiz import quiz_bot
-from utils.dialogflowQuery import dialogflow_query
-from utils.webSearch import google_search
-from api.text import sendText
-from api.buttons import sendButtons
-
-# Extra imports
-from pymongo import MongoClient
 import datetime
-
-# import flask for setting up the web server
-from flask import Flask, request,Response
-
+import json
 import os
 
+import langid
 #import requests to make API call
 import requests
-
-import langid
-
-
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
+# import flask for setting up the web server
+from flask import Flask, Response, request
+# Extra imports
+from pymongo import MongoClient
+
+from api.buttons import sendButtons, sendButtons_2
+from api.text import sendText
+# from utils.quiz import quiz_bot
+from utils.dialogflowQuery import dialogflow_query
+# from utils.speech_to_text import speech_to_text
+from utils.sendMessage import send_message
+from utils.video import youtube
+from utils.visualisation import student_progress
+from utils.webSearch import google_search
+from utils.TrialFlow import trialFlow
 load_dotenv()
 
 
@@ -41,21 +35,31 @@ app = Flask(__name__)
 quiz_time = False
 
 
+
+
+
 # Mongo CLient
 DATABASE_URL = os.environ['DATABASE_URL']
 mongoClient = MongoClient(DATABASE_URL)
 db = mongoClient["wcdatabase"]
 
+######################## Trial-Payment Testing #################################
+
+# user  = db['test'].find_one({ '_id':request.form.get('WaId') })
+
+# print(user['trial'])
+# print(user['payment'])
+
+
+
+
+######################## Trial-Payment Testing #################################
+
+
+
 quiz_time = False
 
-def send_message(message_body,imageUrl):
-    # send text message from bot to user
-    text_message = client.messages.create(
-        body=message_body,
-        from_='whatsapp:+14155238886',
-        to='whatsapp:+919960855675',
-        media_url=imageUrl
-    )
+ 
 
 def respond(message):
     response = MessagingResponse()
@@ -67,15 +71,22 @@ def respond(message):
 @app.route('/reply', methods=['POST'])
 def reply():
     global quiz_time
-    user  = db['test'].find_one({ '_id':request.form.get('WaId') })
-    quiz_count = user['quiz_count']
-    print("HELLLLLOCOCOCOCOCO")
-    # message = request.form.get('Body').lower()
-    if quiz_time and quiz_count == 0:
-        quiz_initial(user, quiz_count)
-        return ''
+   
+    #user status
+    trialFlow(request,db)
+  
 
-    workflow(request)
+    # quiz_count = user['quiz_count']
+    # print("HELLLLLOCOCOCOCOCO")
+    # # message = request.form.get('Body').lower()
+    # if quiz_time and quiz_count == 0:
+    #     quiz_initial(user, quiz_count)
+    #     return ''
+
+    # workflow(request)
+
+
+
     return ''
     
 def quiz_initial(user, quiz_count):
@@ -165,3 +176,4 @@ def workflow(request):
 
 if __name__ == '__main__':
     app.run(debug=False)
+ 
