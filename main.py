@@ -1,5 +1,5 @@
 # Utils
-from utils.visualisation import student_progress
+# from utils.visualisation import student_progress
 from utils.video import youtube
 from utils.sendMessage import send_message
 # from utils.quiz import quiz_bot
@@ -38,7 +38,7 @@ from utils.dialogflowQuery import dialogflow_query
 # from utils.speech_to_text import speech_to_text
 from utils.sendMessage import send_message
 from utils.video import youtube
-from utils.visualisation import student_progress
+# from utils.visualisation import student_progress
 from utils.webSearch import google_search
 from utils.TrialFlow import trialFlow
 from utils.db import db
@@ -222,7 +222,8 @@ def workflow(request, response_df):
         
         if response_df.query_result.intent.display_name == 'Parent':
             print(response_df.query_result.parameters)
-            picture_url = student_progress(db)
+            # picture_url = student_progress(db)
+            picture_url=''
             send_message(response_df.query_result.fulfillment_text, picture_url)
             return ''
         
