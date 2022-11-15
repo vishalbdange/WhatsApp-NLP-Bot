@@ -41,25 +41,26 @@ from utils.video import youtube
 from utils.visualisation import student_progress
 from utils.webSearch import google_search
 from utils.TrialFlow import trialFlow
+from utils.db import db
+
+
 load_dotenv()
 
 
 # creating the Flask object
 app = Flask(__name__)
 
-
+import utils.payment 
 #importing youtube Videos 
 
 quiz_time = False
 
 
 
-
-
 # Mongo CLient
-DATABASE_URL = os.environ['DATABASE_URL']
-mongoClient = MongoClient(DATABASE_URL)
-db = mongoClient["wcdatabase"]
+# DATABASE_URL = os.environ['DATABASE_URL']
+# mongoClient = MongoClient(DATABASE_URL)
+# db = mongoClient["wcdatabase"]
 
 ######################## Trial-Payment Testing #################################
 
@@ -86,7 +87,7 @@ quiz_time = False
 #     return str(response)
 
 
-@app.route('/reply', methods=['POST'])
+@app.route('/', methods=['POST'])
 def reply():
     global quiz_time
 
@@ -235,7 +236,7 @@ def workflow(request, response_df):
             print(response_df.query_result.fulfillment_text)
             print(response_df.query_result.intent.display_name)
             print(request.form)
-            sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
+            sendText(request.form.get('WaId'), 'en',response_df.query_result.fulfillment_text)
             
     return ''
 
