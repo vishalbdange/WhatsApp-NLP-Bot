@@ -79,17 +79,19 @@ quiz_time = False
 
  
 
-def respond(message):
-    response = MessagingResponse()
-    response.message(message)
-    print(str(response))
-    return str(response)
+# def respond(message):
+#     response = MessagingResponse()
+#     response.message(message)
+#     print(str(response))
+#     return str(response)
 
 
 @app.route('/reply', methods=['POST'])
 def reply():
     global quiz_time
+
     trialFlow(request,db)
+
     message = request.form.get('Body')
     langId = langid.classify(message)[0]
     if langId != 'en':
