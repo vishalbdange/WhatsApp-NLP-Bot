@@ -22,6 +22,8 @@ from flask import Flask, request
 import os
 import json
 import random
+from deep_translator import GoogleTranslator
+import langid
 
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
@@ -42,12 +44,15 @@ quiz_time = False
 @app.route('/', methods=['POST'])
 def reply():
     global quiz_time
-    message = request.form.get('Body').lower() # video on digimon
+    message = request.form.get('Body')
+    langId = langid.classify(message)[0]
+    if langId != 'en':
+        message = GoogleTranslator(source="auto", target="en").translate(message)
     response_df = dialogflow_query(message)
     
     user  = db['test'].find_one({ '_id':request.form.get('WaId') })
     
-    if user == None and response_df.query_result.intent.display_name != 'Register' and message != "just exploring!":
+    if user == None and response_df.query_result.intent.display_name != 'Register' and message != "Just exploring!":
         # send button to register
         # sendTwoButton(request.form.get('WaId'), "Welcome to our world of education", "register", "I want to register right now!", "surf",  "I am just here to surf and explore!")
         welcome_text = ["Welcome to our world of education", 
@@ -55,31 +60,37 @@ def reply():
                         "Trust me! Registering with us will brighten your future", 
                         "Vishal, the business tycoon recommends us, register now!"]
         print(message)
-        sendTwoButton(request.form.get('WaId'), welcome_text[random.randint(0, 3)], ["register", "explore"], ["Register right now!", "Just exploring!"])
+        # print(response_df.query_result.language_code)
+        
+        sendTwoButton(request.form.get('WaId'), langId, welcome_text[random.randint(0, 3)], ["register", "explore"], ["Register right now!", "Just exploring!"])
         return ''
     
     if user == None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
-        db["test"].insert_one({ '_id':request.form.get('WaId') })
+        db["test"].insert_one({ '_id':request.form.get('WaId'), 'name': '', 'email': '' })
         sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
         return ''
         
-    if user == None and message == "just exploring!":
+    if user == None and message == "Just exploring!":
         sendText(request.form.get('WaId'), "Cool Carry on")
         return ''
         
-    if  user['name'] == '' and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
-        name_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('email.original'))
-        name = name_.split("\"")[1]
-        db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'name': name }})
-        sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
-        return ''
+    if  user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
+        if user['name'] == '':
+            name_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('person.original'))
+            name = name_.split("\"")[1]
+            db['test'].update_one({ '_id':request.form.get('WaId') }, { "$set": { 'name': name }})
+            sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
+            return ''
         
-    if user['email'] == '' and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
-        email_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('person.original'))
-        email = email_.split("\"")[1]
-        db['test'].update_many({ '_id':request.form.get('WaId') }, { "$set": { 'email': email, 'trialDone': false, 'paymentDone': false }})
-        sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
-        return ''
+        elif user['email'] == '':
+            email_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('email.original'))
+            email = email_.split("\"")[1]
+            db['test'].update_many({ '_id':request.form.get('WaId') }, { "$set": { 'email': email, 'trialDone': "false", 'paymentDone': "false" }})
+            sendText(request.form.get('WaId'), response_df.query_result.fulfillment_text)
+            return ''
+        
+    # if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
+        
         
     
     quiz_count = user['quiz_count']
@@ -89,7 +100,7 @@ def reply():
         quiz_initial(user, quiz_count)
         return ''
 
-    workflow(request)
+    workflow(request, response_df)
     return ''
     
 def quiz_initial(user, quiz_count):
@@ -137,7 +148,7 @@ def quiz_chat(user, user_answer):
 
         
 
-def workflow(request):
+def workflow(request, response_df):
     global quiz_time
     if quiz_time:
         user = db['test'].find_one({ '_id':request.form.get('WaId') })

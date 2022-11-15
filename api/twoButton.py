@@ -1,9 +1,15 @@
 import requests
 import json
+from deep_translator import GoogleTranslator
 
 url = "https://iqwhatsapp.airtel.in:443/gateway/airtel-xchange/basic/whatsapp-manager/v1/session/send/interactive/buttons"
 
-def sendTwoButton(receiver, text, tag, title):
+def sendTwoButton(receiver, langId, text, tag, title):
+    if langId != 'en':
+        text = GoogleTranslator(source="en", target=langId).translate(text)
+        title[0] = GoogleTranslator(source="en", target=langId).translate(title[0])
+        title[1] = GoogleTranslator(source="en", target=langId).translate(title[1])
+        
     payload = json.dumps({
         "sessionId": "5792547f57a44b358d3f1425dc163b7f",
         "to": receiver,
