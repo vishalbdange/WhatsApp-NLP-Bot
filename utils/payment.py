@@ -1,28 +1,25 @@
 # import flask for setting up the web server
+from flask import *
+
 # import OS for environment variables
 import os
 
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
-from flask import *
-
 load_dotenv()
 
 # import razorpay sdk
 import razorpay
-
 razorpay_key = os.environ['RAZORPAY_KEY_ID']
 razorpay_secret = os.environ['RAZORPAY_KEY_SECRET']
 
 
 @app.route('/register-for-course')
 def form():
-    print("REgistering..")
     global id, name
     id = 101 # from session
     name = 'Keval'  # from DB using id
     courses = ["10th", "12th", "JEE", "GRE"] # interested courses from database
-    print("REgistering..")
     return render_template('payment_form.html', name=name, courses=courses, len=len(courses))
 
 @app.route('/pay', methods=['POST'])
@@ -31,7 +28,7 @@ def pay():
         global payment, course
         name = 'Keval'  # from DB using id
         email = 'keval@gmail.com' # from DB using id
-        contact = request.form.get('WaId') # from DB using id
+        contact = os.environ['YOUR_WHATSAPP_NUMBER'] # from DB using id
         course = request.form['course']
         client = razorpay.Client(auth=(razorpay_key, razorpay_secret))
         notes = {

@@ -9,7 +9,7 @@ import requests
 def google_search(query_text):
     url='https://customsearch.googleapis.com/customsearch/v1'
     cx='21f70c2b29d284393'
-    search_key = os.environ['GOOGLE_API_KEY']
+    search_key = os.environ['WEB_API_KEY']
     parameters = {
         "q" : query_text,
         "cx" : cx,
