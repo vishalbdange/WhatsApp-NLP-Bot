@@ -59,6 +59,7 @@ quiz_time = False
 
 @app.route('/', methods=['POST'])
 def reply():
+    
     global quiz_time
     message_ = request.form.get('Body')
     print(request.form)
@@ -93,6 +94,10 @@ def reply():
 
     if user == None and response_df.query_result.intent.display_name == 'Organisation':
         organisationIntroduction(request.form.get('WaId'), langId)
+        return ''
+
+    if user == None and response_df.query_result.intent.display_name == 'Organisation - history' or response_df.query_result.intent.display_name == 'Organisation - vision' or response_df.query_result.intent.display_name == 'Organisation - visit':
+        sendText(request.form.get('WaId'), langId, response_df.query_result.fulfillment_text)
         return ''
 
     if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
