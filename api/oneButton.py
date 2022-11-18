@@ -7,7 +7,7 @@ url = "https://iqwhatsapp.airtel.in:443/gateway/airtel-xchange/basic/whatsapp-ma
 def sendOneButton(receiver, langId, text, tag, title):
     if langId != 'en':
         text = GoogleTranslator(source="en", target=langId).translate(text)
-        title = GoogleTranslator(source="en", target=langId).translate(title)
+        title = GoogleTranslator(source="en", target=langId).translate(title) + '(' + tag +')'
         
     payload = json.dumps({
         "sessionId": "5792547f57a44b358d3f1425dc163b7f",
@@ -19,7 +19,7 @@ def sendOneButton(receiver, langId, text, tag, title):
         "buttons": [
             {
                 "tag": tag,
-                "title": title
+                "title": title 
             }
         ]
     })
