@@ -28,7 +28,7 @@ def trialFlow(request,db):
    
     elif(user['trial'] == 'true' and user['payment'] == 'false' and message=='Yes'):
         sendText(request.form.get('WaId'),"en","Sending you the payment link ...")
-        sendText(request.form.get('WaId'),"en","Sending you the payment link for the given course..." + 'localhost:5000/register-for-course/'+request.form.get('WaId')) 
+        sendText(request.form.get('WaId'),"en","Sending you the payment link for the given course..." + 'https://vikings.onrender.com/register-for-course/'+ request.form.get('WaId')) 
         
         #After Payment Update the payment true in db
     elif(user['trial'] == 'true' and user['payment'] == 'false' and message=='No'): 
