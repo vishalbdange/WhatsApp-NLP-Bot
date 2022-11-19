@@ -1,5 +1,5 @@
 # Utils
-# from utils.visualisation import student_progress
+from utils.visualisation import studentProgress
 from utils.video import youtube
 from utils.sendMessage import send_message
 # from utils.quiz import quiz_bot
@@ -209,8 +209,8 @@ def workflow(user, request, response_df):
             return ''
 
         if user['scheduleDone'] == 'false':
-            sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
-            
+            # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
+            studentProgress(request.form.get('WaId'))
             return ''
 
         if response_df.query_result.intent.display_name == 'Videos':
@@ -226,7 +226,7 @@ def workflow(user, request, response_df):
 
         if response_df.query_result.intent.display_name == 'Parent':
             print(response_df.query_result.parameters)
-            picture_url = student_progress(db)
+            picture_url = studentProgress()
             send_message(
                 response_df.query_result.fulfillment_text, picture_url)
             return ''
