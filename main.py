@@ -6,12 +6,20 @@ from utils.sendMessage import send_message
 from utils.dialogflowQuery import dialogflow_query
 from utils.webSearch import google_search
 from utils.organisationInfo import organisationIntroduction
+# from utils.quiz import quiz_bot
+from utils.dialogflowQuery import dialogflow_query
+from utils.TrialFlow import trialFlow
+from utils.db import db
+from utils.schedule import getTimeSlot
+from utils.schedule import bookTimeSlot
+from utils.reschedule import rescheduleAppointment
 
 from api.text import sendText
 from api.quizButtons import sendQuiz
 from api.oneButton import sendOneButton
 from api.twoButton import sendTwoButton
 from api.threeButton import sendThreeButton
+from api.list import sendList
 
 # Extra imports
 from pymongo import MongoClient
@@ -33,17 +41,6 @@ from flask import Flask, Response, request
 # Extra imports
 from pymongo import MongoClient
 
-from api.text import sendText
-# from utils.quiz import quiz_bot
-from utils.dialogflowQuery import dialogflow_query
-# from utils.speech_to_text import speech_to_text
-from utils.sendMessage import send_message
-from utils.video import youtube
-# from utils.visualisation import student_progress
-from utils.webSearch import google_search
-from utils.TrialFlow import trialFlow
-from utils.db import db
-
 
 load_dotenv()
 
@@ -51,8 +48,7 @@ load_dotenv()
 # creating the Flask object
 app = Flask(__name__)
 
-import utils.payment 
-#importing youtube Videos 
+
 
 quiz_time = False
 
@@ -196,11 +192,25 @@ def workflow(user, request, response_df):
             sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
             return ''
         
+        if response_df.query_result.intent.display_name == 'Schedule':
+            timeSlots = getTimeSlot()
+            print(timeSlots)
+            sendList(request.form.get('WaId'), user["langId"], "Please choose your preferred time for tomorrow!", "Free slots tomorrow!", timeSlots, timeSlots, None)
+            return '' 
+        
+        if response_df.query_result.intent.display_name == 'Schedule - time':
+            bookTimeSlot(request.form.get('Body'), request.form.get('WaId'), user['langId'])
+            return ''
+        
+        if response_df.query_result.intent.display_name == 'Schedule - time - yes' or response_df.query_result.intent.display_name == 'Schedule - time - no':
+            desiredTime_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('time.original'))
+            desiredTime = desiredTime_.split("\"")[1]
+            rescheduleAppointment(response_df.query_result.intent.display_name, request.form.get('WaId'), user['langId'], desiredTime)
+            return ''
 
         if user['scheduleDone'] == 'false':
-            #sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
+            sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
             
-            sendList(request.form.get('WaId'), user["langId"], "Please choose your preferred time to book your appointments!", "")
             return ''
 
         if response_df.query_result.intent.display_name == 'Videos':
