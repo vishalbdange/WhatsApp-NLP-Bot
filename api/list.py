@@ -1,31 +1,36 @@
 import requests
 import json
+from deep_translator import GoogleTranslator
 
 url = "https://iqwhatsapp.airtel.in:443/gateway/airtel-xchange/basic/whatsapp-manager/v1/session/send/interactive/list"
 
 
-def sendList():
+def sendList(receiver, langId, text, tag, title, description):
+    if langId != 'en':
+        text = GoogleTranslator(source="en", target=langId).translate(text)
+        
+        for x in title:
+            title[0] = GoogleTranslator(source="en", target=langId).translate(title[0]) + '(' + tag[0] +')'
+            description[0] = GoogleTranslator(source="en", target=langId).translate(description[0])
+    options = []     
+    for i in range(0, len(tag)):
+        options.append({
+                    "tag": tag[i],
+                    "title": title[i],
+                    "description": description[i]
+                })
+            
+        
     payload = json.dumps({
         "sessionId": "31e965f1-5f31-45b0-b522-918af89bcf69",
-        "to": "919820860959",
+        "to": receiver,
         "from": "918904587734",
         "message": {
-            "text": "Multiple stores are available at this pin code. Select one of the below to start your grocery shopping."
+            "text": text
         },
         "list": {
             "heading": "Select Store",
-            "options": [
-                {
-                    "tag": "store1",
-                    "title": "Store 1",
-                    "description": "Ambience Mall, Gurugram"
-                },
-                {
-                    "tag": "store2",
-                    "title": "Store 2",
-                    "description": "Cyber Hub, Gurugram"
-                }
-            ]
+            "options": options
         }
     })
     headers = {
