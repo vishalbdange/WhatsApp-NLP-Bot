@@ -198,7 +198,9 @@ def workflow(user, request, response_df):
         
 
         if user['scheduleDone'] == 'false':
-            sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
+            #sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
+            
+            sendList(request.form.get('WaId'), user["langId"], "Please choose your preferred time to book your appointments!", "")
             return ''
 
         if response_df.query_result.intent.display_name == 'Videos':
