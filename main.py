@@ -13,6 +13,7 @@ from utils.db import db
 from utils.schedule import getTimeSlot
 from utils.schedule import bookTimeSlot
 from utils.reschedule import rescheduleAppointment
+from utils.checkProfile import checkProfile
 
 from api.text import sendText
 from api.quizButtons import sendQuiz
@@ -20,6 +21,7 @@ from api.oneButton import sendOneButton
 from api.twoButton import sendTwoButton
 from api.threeButton import sendThreeButton
 from api.list import sendList
+from api.courseraProfile import getCourseraProfile
 
 # Extra imports
 from pymongo import MongoClient
@@ -210,7 +212,9 @@ def workflow(user, request, response_df):
 
         if user['scheduleDone'] == 'false':
             # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
-            studentProgress(request.form.get('WaId'))
+            # studentProgress(request.form.get('WaId'))
+            checkProfile(request.form.get('WaId'), user['langId'],'https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65')
+            # print(getCourseraProfile('https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65'))
             return ''
 
         if response_df.query_result.intent.display_name == 'Videos':
