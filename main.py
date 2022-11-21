@@ -25,6 +25,7 @@ from api.courseraProfile import getCourseraProfile
 
 # Extra imports
 from pymongo import MongoClient
+import pymongo as pymongo
 import datetime
 import json
 import os
@@ -32,9 +33,9 @@ import json
 import random
 from deep_translator import GoogleTranslator
 import langid
+from datetime import date, timedelta
 
-import langid
-#import requests to make API call
+# import requests to make API call
 import requests
 # import dotenv for loading the environment variables
 from dotenv import load_dotenv
@@ -51,13 +52,12 @@ load_dotenv()
 app = Flask(__name__)
 
 
-
 quiz_time = False
 
 
 @app.route('/', methods=['POST'])
 def reply():
-    
+
     global quiz_time
     message_ = request.form.get('Body')
     print(request.form)
@@ -81,13 +81,14 @@ def reply():
         print(message)
         # print(response_df.query_result.language_code)
 
-        sendTwoButton(request.form.get('WaId'), langId, welcome_text[random.randint(0, 3)], ["register", "roam"], ["Register right now!", "Just exploring!"])
+        sendTwoButton(request.form.get('WaId'), langId, welcome_text[random.randint(
+            0, 3)], ["register", "roam"], ["Register right now!", "Just exploring!"])
         return ''
 
     if user == None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
         db["test"].insert_one({'_id': request.form.get(
             'WaId'), 'name': '', 'email': '', 'langId': langId})
-        sendText(request.form.get('WaId'), langId, response_df.query_result.fulfillment_text)
+        sendText(request.form.get('WaId'), langId,response_df.query_result.fulfillment_text)
         return ''
 
     if user == None and response_df.query_result.intent.display_name == 'Organisation':
@@ -103,7 +104,7 @@ def reply():
             name_ = str(response_df.query_result.output_contexts[0].parameters.fields.get(
                 'person.original'))
             name = name_.split("\"")[1]
-            db['test'].update_one({'_id': request.form.get('WaId')}, {"$set": {'name': name}})
+            db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'name': name}})
             sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
             return ''
 
@@ -111,19 +112,16 @@ def reply():
             email_ = str(response_df.query_result.output_contexts[0].parameters.fields.get(
                 'email.original'))
             email = email_.split("\"")[1]
-            db['test'].update_many({'_id': request.form.get('WaId')}, {"$set": {'email': email.lower(), 'scheduleDone': "false"}})
-            sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
+            # emailUnique = db['test'].create_index([("email", pymongo.ASCENDING)], unique=True,)
+            db['test'].update_many({'_id': request.form.get('WaId')}, {"$set": {'email': email.lower(), 'courses': [], 'courseraId': '', 'offersAvailed': [], 'UNIT-TESTING': ''}})
+            # email.clear()
+            # print('FINSIHEDDD ' + finishedRegistration)
+            sendText(request.form.get('WaId'),user['langId'], response_df.query_result.fulfillment_text)
             return ''
 
     # if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
 
     # quiz_count = user['quiz_count']
-    quiz_count = 100
-    print("HELLLLLOCOCOCOCOCO")
-    # message = request.form.get('Body').lower()
-    if quiz_time and quiz_count == 0:
-        quiz_initial(user, quiz_count)
-        return ''
 
     workflow(user, request, response_df)
     return ''
@@ -175,78 +173,122 @@ def quiz_chat(user, user_answer):
 
 
 def workflow(user, request, response_df):
-    global quiz_time
-    if quiz_time:
-        # user = db['test'].find_one({'_id': request.form.get('WaId')})
-        quiz_answer = db['course']
-        quiz_chat(user, request.form.get('Body'))
-        return ''
+    # global quiz_time
+    # if quiz_time:
+    #     # user = db['test'].find_one({'_id': request.form.get('WaId')})
+    #     quiz_answer = db['course']
+    #     quiz_chat(user, request.form.get('Body'))
+    #     return ''
 
-    if not quiz_time:
         # message = request.form.get('Body').lower() # video on digimon
         # response_df = dialogflow_query(message)
+
+    if response_df.query_result.intent.display_name == 'Organisation':
+        organisationIntroduction(request.form.get('WaId'), user['langId'])
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Organisation - history' or response_df.query_result.intent.display_name == 'Organisation - vision' or response_df.query_result.intent.display_name == 'Organisation - visit':
+        sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Schedule':
+        timeSlots = getTimeSlot()
+        print(timeSlots)
+        sendList(request.form.get('WaId'), user["langId"], "Please choose your preferred time for tomorrow!", "Free slots tomorrow!", timeSlots, timeSlots, None, True)
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Schedule - time':
+        bookTimeSlot(request.form.get('Body'), request.form.get('WaId'), user['langId'])
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Schedule - time - yes' or response_df.query_result.intent.display_name == 'Schedule - time - no':
+        desiredTime_ = str(
+            response_df.query_result.output_contexts[0].parameters.fields.get('time.original'))
+        desiredTime = desiredTime_.split("\"")[1]
+        rescheduleAppointment(response_df.query_result.intent.display_name, request.form.get('WaId'), user['langId'], desiredTime)
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Quiz':
         
-        if response_df.query_result.intent.display_name == 'Organisation':
-            organisationIntroduction(request.form.get('WaId'), user['langId'])
+        db["test"].find_one({ '_id': request.form.get('WaId') })
+        userCourses =  []
+        
+        if len(user['courses']) == 0:
+            sendText("You haven't enrolled in any courses that contain quizzes. Why not explore more quizzes right now!")
             return ''
         
-        if response_df.query_result.intent.display_name == 'Organisation - history' or response_df.query_result.intent.display_name == 'Organisation - vision' or response_df.query_result.intent.display_name == 'Organisation - visit':
-            sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
-            return ''
+        for i in range(0, len(user['courses'])):
+            if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()):
+                userCourses.append(user['courses'][i]['courseId'])
+                print()
+                
+                
+        print(userCourses)
         
-        if response_df.query_result.intent.display_name == 'Schedule':
-            timeSlots = getTimeSlot()
-            print(timeSlots)
-            sendList(request.form.get('WaId'), user["langId"], "Please choose your preferred time for tomorrow!", "Free slots tomorrow!", timeSlots, timeSlots, None)
-            return '' 
+        sendList(request.form.get('WaId'), user['langId'], "Please choose the course for which you want to test yourself", "Choose Quiz", userCourses, userCourses, None, False)
+        # sendList()
         
-        if response_df.query_result.intent.display_name == 'Schedule - time':
-            bookTimeSlot(request.form.get('Body'), request.form.get('WaId'), user['langId'])
-            return ''
+        # quiz_count = 100
+        # print("HELLLLLOCOCOCOCOCO")
+        # # message = request.form.get('Body').lower()
+        # if quiz_time and quiz_count == 0:
+        # quiz_initial(user, quiz_count)
+        return ''
+    
+    if user['UNIT-TESTING'] == 'blue':
+        # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
+        # studentProgress(request.form.get('WaId'))
+        # checkProfile(request.form.get('WaId'), user['langId'],'https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65')
+        courseSelected = db["course"].find_one({'_id': 'math'})
         
-        if response_df.query_result.intent.display_name == 'Schedule - time - yes' or response_df.query_result.intent.display_name == 'Schedule - time - no':
-            desiredTime_ = str(response_df.query_result.output_contexts[0].parameters.fields.get('time.original'))
-            desiredTime = desiredTime_.split("\"")[1]
-            rescheduleAppointment(response_df.query_result.intent.display_name, request.form.get('WaId'), user['langId'], desiredTime)
-            return ''
-
-        if user['scheduleDone'] == 'false':
-            # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
-            # studentProgress(request.form.get('WaId'))
-            checkProfile(request.form.get('WaId'), user['langId'],'https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65')
-            # print(getCourseraProfile('https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65'))
-            return ''
-
-        if response_df.query_result.intent.display_name == 'Videos':
-            result_videos = youtube(response_df.query_result.query_text)
-            print(result_videos)
-            for video in result_videos:
-                sendText(request.form.get('WaId'),video['url'] + ' | ' + video['title'])
-            return ''
-
-        if response_df.query_result.intent.display_name == 'WebSearch':  # Google JEE datde
-            result_search = google_search(response_df.query_result.query_text)
-            sendText(request.form.get('WaId'), result_search)
-
-        if response_df.query_result.intent.display_name == 'Parent':
-            print(response_df.query_result.parameters)
-            picture_url = studentProgress()
-            send_message(
-                response_df.query_result.fulfillment_text, picture_url)
-            return ''
-
-        else:
-            # quiz_bot(db, 'M1')
-            now = datetime.datetime.now()
-            print(now.year, now.month, now.day,now.hour, now.minute, now.second)
-            print(type(now.year), type(now.month), type(now.day),type(now.hour), type(now.minute), type(now.second))
-            print(request.form.get('From'))
-            # send_message(request.form.get('From'), response_df.query_result.fulfillment_text,'')
-            print(response_df.query_result.fulfillment_text)
-            print(response_df.query_result.intent.display_name)
-            print(request.form)
-            sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
-
+        for i in range(0, len(user['courses'])):
+            if user['courses'][1]['courseId'] == courseSelected['_id']:
+                sendText(request.form.get('WaId'), user['langId'], "You have already enrolled in this course!")
+                return ''
+        
+        db["test"].update_one({'_id': request.form.get('WaId')}, {"$push": {'courses':
+        {
+            'courseId': courseSelected['_id'],
+            'courseType': courseSelected['courseType'],
+            'courseStartDate': str(date.today()),
+            'courseEndDate':  str(date.today() + timedelta(weeks=courseSelected['courseDuration'])),
+            'courseQuizzes': [],
+            'coursePayment': True,
+        }
+        }})
+        # print(getCourseraProfile('https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65'))
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Videos':
+        result_videos = youtube(response_df.query_result.query_text)
+        print(result_videos)
+        for video in result_videos:
+            sendText(request.form.get('WaId'), video['url'] + ' | ' + video['title'])
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'WebSearch':  # Google JEE datde
+        result_search = google_search(response_df.query_result.query_text)
+        sendText(request.form.get('WaId'), result_search)
+    
+    if response_df.query_result.intent.display_name == 'Parent':
+        print(response_df.query_result.parameters)
+        picture_url = studentProgress()
+        send_message(
+            response_df.query_result.fulfillment_text, picture_url)
+        return ''
+    
+    else:
+        # quiz_bot(db, 'M1')
+        now = datetime.datetime.now()
+        print(now.year, now.month, now.day,now.hour, now.minute, now.second)
+        print(type(now.year), type(now.month), type(now.day),type(now.hour), type(now.minute), type(now.second))
+        print(request.form.get('From'))
+        # send_message(request.form.get('From'), response_df.query_result.fulfillment_text,'')
+        print(response_df.query_result.fulfillment_text)
+        print(response_df.query_result.intent.display_name)
+        print(request.form)
+        sendText(request.form.get('WaId'),user['langId'], response_df.query_result.fulfillment_text)
+    
     return ''
 
 

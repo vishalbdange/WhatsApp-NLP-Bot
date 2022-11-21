@@ -39,7 +39,7 @@ def rescheduleAppointment(intent, userWAId, langId, time):
             updated = db["appointments"].update_one({ '_id': tomorrow }, { "$set": { time: userWAId, bookedTime: None }} )
             if updated:
                 print('Appointment scheduled')
-                sendText(userWAId, langId, "Your appointment for tomorrow has been scheduled at " + time )
+                sendText(userWAId, langId, "Your appointment for tomorrow has been scheduled at " + time + ". You will be called by our counselor at the given time and date.")
                 return ''
             else:
                 print('An erroneous response')
