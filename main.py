@@ -20,6 +20,8 @@ from api.oneButton import sendOneButton
 from api.twoButton import sendTwoButton
 from api.threeButton import sendThreeButton
 from api.list import sendList
+from api.uploadMedia import uploadMedia
+from api.sendTemplate import sendTemplateForYoutube
 
 # Extra imports
 from pymongo import MongoClient
@@ -67,8 +69,29 @@ def reply():
         message = message_
     response_df = dialogflow_query(message)
 
-    user = db['test'].find_one({'_id': request.form.get('WaId')})
 
+#_____________Video Search wiith send Template ________________________________________________
+
+    ytResults = youtube(message)
+    for ytResult in ytResults:
+        print(os.path.splitext(ytResult['thumbnail'])[0])
+        print(os.path.splitext(ytResult['thumbnail'])[1])
+        img_url = ytResult['thumbnail']
+        response = requests.get(img_url)
+        if response.status_code:
+            fp = open('ytImage.jpg', 'wb')
+            fp.write(response.content)
+            fp.close()
+        mediaId,mediaType = uploadMedia('ytImage.jpg','ytImage.jpg','jpg')
+        print(mediaId)
+        sendTemplateForYoutube(request.form.get('WaId'),mediaId,mediaType,ytResult['url'])
+        print()
+
+#_______________________________   Video Search Send Template Ends  ________________________________________________________________
+
+
+    user = db['test'].find_one({'_id': request.form.get('WaId')})
+    print(response_df.query_result.intent.display_name)
     if user == None and response_df.query_result.intent.display_name != 'Register' and response_df.query_result.intent.display_name != 'Organisation':
         # send button to register
         # sendTwoButton(request.form.get('WaId'), "Welcome to our world of education", "register", "I want to register right now!", "surf",  "I am just here to surf and explore!")
@@ -210,7 +233,9 @@ def workflow(user, request, response_df):
 
         if user['scheduleDone'] == 'false':
             # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
-            studentProgress(request.form.get('WaId'))
+            # studentProgress(request.form.get('WaId'))
+            print("Working !")
+            sendText(request.form.get('WaId'), user['langId'], 'https://a837-115-96-217-68.ngrok.io/register-for-course/'+request.form.get('WaId'))
             return ''
 
         if response_df.query_result.intent.display_name == 'Videos':
@@ -244,7 +269,6 @@ def workflow(user, request, response_df):
             sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
 
     return ''
-
 
 if __name__ == '__main__':
     app.run(debug=False)

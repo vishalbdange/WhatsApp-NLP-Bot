@@ -3,7 +3,7 @@ import requests
 url = "https://iqwhatsapp.airtel.in:443/gateway/airtel-xchange/basic/whatsapp-manager/v1/session/media"
 
 def uploadMedia(mediaName, mediaLocation, fileType):
-    
+    mediaType='IMAGE'
     if fileType == 'png':
         fileType = 'image/png'
         mediaType = "IMAGE"
@@ -48,8 +48,10 @@ def uploadMedia(mediaName, mediaLocation, fileType):
         fileType = 'audio/ogg'
         mediaType = "AUDIO"
     
-    payload={'type': mediaType,
-    'businessId': 'Hackathon3_8904587734'}
+    payload={
+        'type': mediaType,
+        'businessId': 'Hackathon3_8904587734'
+    }
     files=[
         ('file',(mediaName,open(mediaLocation,'rb'), fileType))
     ]
