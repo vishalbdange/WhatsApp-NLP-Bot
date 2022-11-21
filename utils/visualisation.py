@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 from api.uploadMedia import uploadMedia 
 from api.media import sendMedia
 from utils.db import db
-# import pyimgur
+import pyimgur
+import requests
 
-# # IMGUR client
-# IMGUR_CLIENT_ID = os.environ['IMGUR_CLIENT_ID']
-# imgurclient = pyimgur.Imgur(IMGUR_CLIENT_ID)
+# IMGUR client
+IMGUR_CLIENT_ID = os.environ['IMGUR_CLIENT_ID']
+imgurclient = pyimgur.Imgur(IMGUR_CLIENT_ID)
 
 # ____________MatPlotLib & IMGUR Trial_____________
 def studentProgress(receiver):
@@ -28,6 +29,14 @@ def studentProgress(receiver):
     mediaId, mediaType = uploadMedia('studentplot.png', 'studentplot.png', 'png')
     print(mediaId, mediaType)
     sendMedia(receiver, mediaId, mediaType)
+    
+    # response = requests.get('https://i.imgur.com/ePhgVEA.jpg')
+    # if response.status_code:
+    #     fp = open('ytImage.jpg', 'wb')
+    #     fp.write(response.content)
+    #     fp.close()
+    # mediaId,mediaType = uploadMedia('ytImage.jpg','ytImage.jpg','jpg')
+    # sendMedia(receiver, mediaId, mediaType)
     
     # uploaded_image = imgurclient.upload_image('studentplot.png', title="Student Progress")
     # print(uploaded_image.link)

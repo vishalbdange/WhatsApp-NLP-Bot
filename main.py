@@ -22,6 +22,7 @@ from api.twoButton import sendTwoButton
 from api.threeButton import sendThreeButton
 from api.list import sendList
 from api.courseraProfile import getCourseraProfile
+from api.quizTemplate import sendQuizQuestion
 
 # Extra imports
 from pymongo import MongoClient
@@ -33,7 +34,7 @@ import json
 import random
 from deep_translator import GoogleTranslator
 import langid
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 # import requests to make API call
 import requests
@@ -52,7 +53,7 @@ load_dotenv()
 app = Flask(__name__)
 
 
-quiz_time = False
+
 
 
 @app.route('/', methods=['POST'])
@@ -121,67 +122,12 @@ def reply():
 
     # if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
 
-    # quiz_count = user['quiz_count']
 
     workflow(user, request, response_df)
     return ''
 
 
-def quiz_initial(user, quiz_count):
-    quiz_count = quiz_count + 1
-    quiz_bot2(db, 'M1', quiz_count)
-    db['test'].update_one({'_id': request.form.get('WaId')}, {"$set": {'quiz_count': quiz_count}})
-    print('COUNT ' + str(quiz_count))
-    return ''
-
-
-def quiz_bot2(db, quizID, questionNumber):
-    collection = db["course"]
-    quiz = collection.find_one({'_id': quizID})
-    questionNumberString = str(questionNumber)
-    if questionNumber > 0 and questionNumber < 6:
-        # send_message(quiz[questionNumberString]['question'], '')
-        # options = '\n' + quiz[questionNumberString]['A'] + '\n' + quiz[questionNumberString]['B'] + '\n' + quiz[questionNumberString]['C'] + '\n' + quiz[questionNumberString]['D'] + '\n'
-        # send_message(options, '')
-        sendQuiz(request.form.get('WaId'), quiz, questionNumberString)
-
-    if questionNumber > 1 and questionNumber < 7:
-        questionNumberString = str(questionNumber - 1)
-        return quiz[questionNumberString]['answer']
-    else:
-        return ''
-
-
-def quiz_chat(user, user_answer):
-    global quiz_time
-    quiz_count = user['quiz_count']
-    quiz_count = quiz_count + 1
-    db['test'].update_one({'_id': request.form.get('WaId')}, {"$set": {'quiz_count': quiz_count}})
-    print(quiz_count)
-    previous_answer = quiz_bot2(db, 'M1', quiz_count)
-    if user_answer == previous_answer:
-        quiz_marks = user['quizzes']['M1'] + 2
-        print(quiz_marks)
-        db['test'].update_one({'_id': request.form.get('WaId')}, {"$set": {'quizzes.M1': quiz_marks}})
-    if quiz_count == 6 or quiz_count > 6:
-        quiz_time = False
-        db['test'].update_one({'_id': request.form.get('WaId')}, {"$set": {'quiz_count': 0}})
-        sendText(request.form.get('WaId'), 'Your quiz is over!')
-        return ''
-    else:
-        return ''
-
-
 def workflow(user, request, response_df):
-    # global quiz_time
-    # if quiz_time:
-    #     # user = db['test'].find_one({'_id': request.form.get('WaId')})
-    #     quiz_answer = db['course']
-    #     quiz_chat(user, request.form.get('Body'))
-    #     return ''
-
-        # message = request.form.get('Body').lower() # video on digimon
-        # response_df = dialogflow_query(message)
 
     if response_df.query_result.intent.display_name == 'Organisation':
         organisationIntroduction(request.form.get('WaId'), user['langId'])
@@ -210,7 +156,9 @@ def workflow(user, request, response_df):
     
     if response_df.query_result.intent.display_name == 'Quiz':
         
-        db["test"].find_one({ '_id': request.form.get('WaId') })
+        db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': 'true'}})
+        
+        # coursesRank = []
         userCourses =  []
         
         if len(user['courses']) == 0:
@@ -219,26 +167,130 @@ def workflow(user, request, response_df):
         
         for i in range(0, len(user['courses'])):
             if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()):
+                # coursesRank.append(str(i + 1))
                 userCourses.append(user['courses'][i]['courseId'])
                 print()
-                
                 
         print(userCourses)
         
         sendList(request.form.get('WaId'), user['langId'], "Please choose the course for which you want to test yourself", "Choose Quiz", userCourses, userCourses, None, False)
-        # sendList()
-        
-        # quiz_count = 100
-        # print("HELLLLLOCOCOCOCOCO")
-        # # message = request.form.get('Body').lower()
-        # if quiz_time and quiz_count == 0:
-        # quiz_initial(user, quiz_count)
         return ''
+    
+    if user['quizBusy'] != 'false':
+        date_format_str = '%d/%m/%Y %H:%M:%S'
+        userCourses = []
+        for i in range(0, len(user['courses'])):
+            if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()):
+                # coursesRank.append(str(i + 1))
+                userCourses.append((user['courses'][i]['courseId']))
+                
+        if user['quizBusy'] == 'true':
+            if request.form.get('Body') in userCourses: 
+            
+                courseChosen = db["course"].find_one({ '_id': request.form.get('Body') })
+                courseChosenName = courseChosen['_id']
+
+                index  = -1
+                for i in range(0, len(user['courses'])):
+                    if user['courses'][i]['courseId'] == courseChosen['_id'] and len(courseChosen['courseQuizzes']) >= len(user['courses'][i]['courseQuizzes']):
+                        index = i
+                        quizNumber = len(user['courses'][index]['courseQuizzes'])
+
+                quizId = courseChosen['courseQuizzes'][quizNumber]
+
+                quizChosen = db["questions"].find_one({ '_id': quizId})
+
+                if quizNumber == len(user['courses'][index]['courseQuizzes']):
+                    db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseId':courseChosenName}, {'$push': {'courses.$.courseQuizzes': {
+                        'quizId': quizId,
+                        'quizStart': datetime.now().strftime(date_format_str),
+                        'quizMarks':[],
+                        'quizScore': 0
+                    }}})
+
+                quizOptions = []
+                updatedUser = db['test'].find_one({'_id': request.form.get('WaId')})
+                questionNumber_ = len(updatedUser['courses'][index]['courseQuizzes'][quizNumber]['quizMarks']) + 1
+                questionNumber = str(len(updatedUser['courses'][index]['courseQuizzes'][quizNumber]['quizMarks']) + 1)
+                quizOptions = [quizChosen[questionNumber]['A'], quizChosen[questionNumber]['B'], quizChosen[questionNumber]['C']]
+
+                quizBusy = str(index) +'-'+str(quizNumber)+'-'+quizId+'-'+questionNumber
+                db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': quizBusy}})
+
+                sendQuizQuestion(request.form.get('WaId'), user['langId'], quizChosen[questionNumber]['question'], quizOptions, "672797807634777")
+
+                return ''
+            
+            else:
+                db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': 'false'}})
+                sendText(request.form.get('WaId'), user['langId'], "Invalid selection of course! The quiz has terminated. Please try again!")
+                return ''
+
+        if request.form.get('Body') in ['A', 'B', 'C']:
+            
+            index = int(user['quizBusy'].split("-")[0])
+            quizNumber = int(user['quizBusy'].split("-")[1])
+            quizId = user['quizBusy'].split("-")[2]
+            questionNumber = user['quizBusy'].split("-")[3]
+            quizChosen = db["questions"].find_one({ '_id': quizId})
+            markPerQuestion = int(quizChosen['quizMarks'] / quizChosen['quizCount'])
+            if int(questionNumber) >= quizChosen['quizCount']:
+                if len(user['courses'][index]['courseQuizzes'][quizNumber]['quizMarks']) + 1 ==  (quizChosen['quizCount']) and int(questionNumber) == quizChosen['quizCount']:
+                    if request.form.get('Body') == quizChosen[questionNumber]['answer']:
+                        
+                        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$push': {'courses.$.courseQuizzes.$[].quizMarks': markPerQuestion}})
+                        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$set': {'courses.$.courseQuizzes.$[].quizEnd': datetime.now().strftime(date_format_str)}})
+
+                    else:
+                        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$push': {'courses.$.courseQuizzes.$[].quizMarks': 0}})
+                        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$set': {'courses.$.courseQuizzes.$[].quizEnd': datetime.now().strftime(date_format_str)}})
+                    
+                updatedUser = db['test'].find_one({'_id': request.form.get('WaId')})
+                completeMarks_ = updatedUser['courses'][index]['courseQuizzes'][quizNumber]['quizMarks']
+                secondsTaken = int((datetime.strptime((updatedUser['courses'][index]['courseQuizzes'][quizNumber]['quizEnd']), date_format_str) - datetime.strptime((updatedUser['courses'][index]['courseQuizzes'][quizNumber]['quizStart']), date_format_str)).total_seconds())
+                completeMarks = sum(completeMarks_) - (secondsTaken * 0.01)
+                db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$set': {'courses.$.courseQuizzes.$[].quizScore': completeMarks}})
+                
+                sendText(request.form.get('WaId'), user['langId'], "Your quiz is over! You have scored " + str(completeMarks) + '!')
+                db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': 'false'}})
+                return ''
+
+            if len(user['courses'][index]['courseQuizzes'][quizNumber]['quizMarks']) < quizChosen['quizCount']:
+                quizOptions = []
+                questionNumber_ = int(questionNumber) + 1
+                questionNumber = str(questionNumber_)
+                # questionNumber = str(len(user['courses'][index]['courseQuizzes'][quizNumber]['quizMarks']) + 1)
+                quizOptions = [quizChosen[questionNumber]['A'], quizChosen[questionNumber]['B'], quizChosen[questionNumber]['C']]
+                
+                if questionNumber_ > 1:
+                    if request.form.get('Body') == quizChosen[str(questionNumber_ - 1)]['answer']:
+                        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$push': {'courses.$.courseQuizzes.$[].quizMarks': markPerQuestion}})
+                        print('COERCTE')
+                
+                    else:
+                        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseQuizzes.quizId':quizId}, {'$push': {'courses.$.courseQuizzes.$[].quizMarks': 0}})
+                        print('INCORCET')
+                
+                quizBusy = str(index) +'-'+str(quizNumber)+'-'+quizId+'-'+questionNumber
+                db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': quizBusy}})
+                sendQuizQuestion(request.form.get('WaId'), user['langId'], quizChosen[questionNumber]['question'], quizOptions, "672797807634777")
+                return ''    
+        
+        quizId = user['quizBusy'].split("-")[2]
+        quizChosen = db["questions"].find_one({ '_id': quizId})
+        courseChosenName = quizChosen['courseId']
+        db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': 'false'}})
+        sendText(request.form.get('WaId'), user['langId'], "Invalid selection! The quiz has been terminated. Please try again!")
+        db['test'].update_one({'_id': request.form.get('WaId'), 'courses.courseId':courseChosenName}, {'$pop': {'courses.$.courseQuizzes': 1}})
+        
+        return ''
+        
     
     if user['UNIT-TESTING'] == 'blue':
         # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
         # studentProgress(request.form.get('WaId'))
         # checkProfile(request.form.get('WaId'), user['langId'],'https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65')
+        
         courseSelected = db["course"].find_one({'_id': 'math'})
         
         for i in range(0, len(user['courses'])):
