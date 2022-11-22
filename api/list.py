@@ -31,7 +31,7 @@ def sendList(receiver, langId, text, heading, tag, title, description, conversio
             
         
     payload = json.dumps({
-        "sessionId": "31e965f1-5f31-45b0-b522-918af89bcf69",
+        "sessionId": "31e965f1-5f31-45b0-yy77-918af89bcf69",
         "to": receiver,
         "from": "918904587734",
         "message": {

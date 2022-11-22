@@ -162,16 +162,20 @@ def workflow(user, request, response_df):
         userCourses =  []
         
         if len(user['courses']) == 0:
-            sendText("You haven't enrolled in any courses that contain quizzes. Why not explore more quizzes right now!")
+            db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': 'false'}})
+            sendText(request.form.get('WaId'), user['langId'], "You haven't enrolled in any courses that contain quizzes. Why not explore more quizzes right now!")
             return ''
         
         for i in range(0, len(user['courses'])):
             if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()):
                 # coursesRank.append(str(i + 1))
                 userCourses.append(user['courses'][i]['courseId'])
-                print()
                 
         print(userCourses)
+        if len(userCourses) == 0:
+            db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': 'false'}})
+            sendText(request.form.get('WaId'), user['langId'], "You haven't enrolled in any courses that contain quizzes. Why not explore more quizzes right now!")
+            return ''
         
         sendList(request.form.get('WaId'), user['langId'], "Please choose the course for which you want to test yourself", "Choose Quiz", userCourses, userCourses, None, False)
         return ''
@@ -185,6 +189,7 @@ def workflow(user, request, response_df):
                 userCourses.append((user['courses'][i]['courseId']))
                 
         if user['quizBusy'] == 'true':
+            
             if request.form.get('Body') in userCourses: 
             
                 courseChosen = db["course"].find_one({ '_id': request.form.get('Body') })
@@ -286,7 +291,7 @@ def workflow(user, request, response_df):
         return ''
         
     
-    if user['UNIT-TESTING'] == 'blue':
+    if user['UNIT-TESTING'] == 'vlue':
         # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
         # studentProgress(request.form.get('WaId'))
         # checkProfile(request.form.get('WaId'), user['langId'],'https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65')
