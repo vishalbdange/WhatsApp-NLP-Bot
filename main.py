@@ -103,7 +103,7 @@ def reply():
         # print(response_df.query_result.language_code)
 
         sendTwoButton(request.form.get('WaId'), langId, welcome_text[random.randint(0, 3)], ["register", "roam"], ["Register right now!", "Just exploring!"])
-        return ''
+        return '' 
 
     if user == None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
         db["test"].insert_one({'_id': request.form.get(
@@ -119,7 +119,7 @@ def reply():
         sendText(request.form.get('WaId'), langId, response_df.query_result.fulfillment_text)
         return ''
 
-    if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
+    if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow' or response_df.query_result.intent.display_name == 'Enroll-Courses' ):
         if user['name'] == '':
             name_ = str(response_df.query_result.output_contexts[0].parameters.fields.get(
                 'person.original'))
@@ -134,7 +134,12 @@ def reply():
             email = email_.split("\"")[1]
             db['test'].update_many({'_id': request.form.get('WaId')}, {"$set": {'email': email.lower(), 'scheduleDone': "false"}})
             sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
+            sendText(request.form.get('WaId'), user['langId'],"Please find below the courses we offer")
+            sendList(request.form.get('WaId'),user['langId'],"These are the courses We offer , Please select one","Courses",["Math","Science","History","Geography","English"],["Math-Course","Science-Course","History-Course","Geography-Course","English"],["NCERT + JEE + CET ","Arihant + JEE","Textbook questions + Revision","Textbook questions + Revision","English grammer + Writing skills and much more..."])
             return ''
+        # else:
+           
+
 
     # if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
 
