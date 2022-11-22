@@ -167,7 +167,7 @@ def workflow(user, request, response_df):
             return ''
         
         for i in range(0, len(user['courses'])):
-            if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()):
+            if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()) and user['courses'][i]['courseType'] == 'static':
                 # coursesRank.append(str(i + 1))
                 userCourses.append(user['courses'][i]['courseId'])
                 
