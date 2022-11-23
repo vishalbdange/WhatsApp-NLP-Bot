@@ -63,15 +63,13 @@ def reply():
     if request.form.get('MediaContentType0') is not None:
         
         print(request.form)
-        # response = requests.get(request.form.get('MediaUrl0'))
-        # if response.status_code:
-        #     fp = open('client_Image.jpg', 'wb')
-        #     fp.write(response.content)
-        #     fp.close()
-        # textFromImage = imgToText('client_Image.jpg')
-        # print(textFromImage)
+        response = requests.get(request.form.get('MediaUrl0'))
+        if response.status_code:
+            fp = open('client_Image.jpg', 'wb')
+            fp.write(response.content)
+            fp.close()
+        textFromImage = imgToText('client_Image.jpg')
         return ''
-    
     print(request)
     global quiz_time
     message_ = request.form.get('Body')
