@@ -5,10 +5,10 @@ url = "https://iqwhatsapp.airtel.in:443/gateway/airtel-xchange/basic/whatsapp-ma
 
 def sendTemplateForYoutube(receiver,mediaId,mediaType,text):
     print("IN the template\n")
-    print(url)
+    print(text)
 
     payload = json.dumps({
-    "templateId": "64cf2368-93d7-4084-9fac-e2883a787aa3",
+    "templateId": "64cf2368-93d7-4084-9fac-e2883a787aa3 ",
     "to": receiver,
     "from": "918904587734",
     "mediaAttachment": {
@@ -27,4 +27,4 @@ def sendTemplateForYoutube(receiver,mediaId,mediaType,text):
     'Content-Type': 'application/json'
     }
     response = requests.request("POST", url, headers=headers, data=payload)
-    print(response)
+    print(response.text)

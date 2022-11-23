@@ -13,6 +13,7 @@ from utils.db import db
 from utils.schedule import getTimeSlot
 from utils.schedule import bookTimeSlot
 from utils.reschedule import rescheduleAppointment
+from utils.imgMedia import imgToText
 
 from api.text import sendText
 from api.quizButtons import sendQuiz
@@ -57,7 +58,21 @@ quiz_time = False
 
 @app.route('/', methods=['POST'])
 def reply():
+
+    print(request.form.get('MediaContentType0'))
+    if request.form.get('MediaContentType0') is not None:
+        
+        print(request.form)
+        # response = requests.get(request.form.get('MediaUrl0'))
+        # if response.status_code:
+        #     fp = open('client_Image.jpg', 'wb')
+        #     fp.write(response.content)
+        #     fp.close()
+        # textFromImage = imgToText('client_Image.jpg')
+        # print(textFromImage)
+        return ''
     
+    print(request)
     global quiz_time
     message_ = request.form.get('Body')
     print(request.form)
@@ -84,7 +99,8 @@ def reply():
             fp.close()
         mediaId,mediaType = uploadMedia('ytImage.jpg','ytImage.jpg','jpg')
         print(mediaId)
-        sendTemplateForYoutube(request.form.get('WaId'),mediaId,mediaType,ytResult['url'])
+        url_link = '\n' + ytResult['url'] + '\n'
+        # sendTemplateForYoutube(request.form.get('WaId'),mediaId,mediaType,""" URL    sdfghbj""")
         print()
 
 #_______________________________   Video Search Send Template Ends  ________________________________________________________________
@@ -134,8 +150,8 @@ def reply():
             email = email_.split("\"")[1]
             db['test'].update_many({'_id': request.form.get('WaId')}, {"$set": {'email': email.lower(), 'scheduleDone': "false"}})
             sendText(request.form.get('WaId'), user['langId'], response_df.query_result.fulfillment_text)
-            sendText(request.form.get('WaId'), user['langId'],"Please find below the courses we offer")
-            sendList(request.form.get('WaId'),user['langId'],"These are the courses We offer , Please select one","Courses",["Math","Science","History","Geography","English"],["Math-Course","Science-Course","History-Course","Geography-Course","English"],["NCERT + JEE + CET ","Arihant + JEE","Textbook questions + Revision","Textbook questions + Revision","English grammer + Writing skills and much more..."])
+            # sendText(request.form.get('WaId'), user['langId'],"Please find below the courses we offer")
+            # sendList(request.form.get('WaId'),user['langId'],"These are the courses We offer , Please select one","Courses",["Math","Science","History","Geography","English"],["Math-Course","Science-Course","History-Course","Geography-Course","English"],["NCERT + JEE + CET ","Arihant + JEE","Textbook questions + Revision","Textbook questions + Revision","English grammer + Writing skills and much more..."])
             return ''
         # else:
            
@@ -240,7 +256,7 @@ def workflow(user, request, response_df):
             # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
             # studentProgress(request.form.get('WaId'))
             print("Working !")
-            sendText(request.form.get('WaId'), user['langId'], 'https://a837-115-96-217-68.ngrok.io/register-for-course/'+request.form.get('WaId'))
+            # sendText(request.form.get('WaId'), user['langId'], 'https://a837-115-96-217-68.ngrok.io/register-for-course/'+request.form.get('WaId'))
             return ''
 
         if response_df.query_result.intent.display_name == 'Videos':
