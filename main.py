@@ -86,10 +86,10 @@ def reply():
     global quiz_time
     message_ = request.form.get('Body')
     print(request.form)
-    langId = ''
-    if langid.classify(message_) is None:
-        langId = 'en'
-    langId = langid.classify(message_)[0]
+    langId = 'en'
+    # if langid.classify(message_) is None:
+    #     langId = 'en'
+    # langId = langid.classify(message_)[0]
     if langId != 'en':
         message = GoogleTranslator(
             source="auto", target="en").translate(message_)
