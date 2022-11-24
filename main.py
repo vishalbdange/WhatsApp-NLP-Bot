@@ -72,10 +72,10 @@ def reply():
             fp.write(response.content)
             fp.close()
         textFromImage = imgToText('client_Image.jpg')
-        langId = ''
-        if langid.classify(textFromImage) is None:
-            langId = 'en'
-        langId = langid.classify(textFromImage)[0]
+        langId = 'en'
+        # if langid.classify(textFromImage) is None:
+        #     langId = 'en'
+        # langId = langid.classify(textFromImage)[0]
         
         print(textFromImage)
         print(google_search(textFromImage))
@@ -86,9 +86,9 @@ def reply():
     message_ = request.form.get('Body')
     print(request.form)
     langId = ''
-    if langid.classify(textFromImage) is None:
+    if langid.classify(message_) is None:
         langId = 'en'
-    langId = langid.classify(textFromImage)[0]
+    langId = langid.classify(message_)[0]
     if langId != 'en':
         message = GoogleTranslator(
             source="auto", target="en").translate(message_)
@@ -165,8 +165,7 @@ def reply():
             # sendText(request.form.get('WaId'), user['langId'],"Please find below the courses we offer")
             # sendList(request.form.get('WaId'),user['langId'],"These are the courses We offer , Please select one","Courses",["Math","Science","History","Geography","English"],["Math-Course","Science-Course","History-Course","Geography-Course","English"],["NCERT + JEE + CET ","Arihant + JEE","Textbook questions + Revision","Textbook questions + Revision","English grammer + Writing skills and much more..."])
             return ''
-        # else:
-           
+        
 
 
     # if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
