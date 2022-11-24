@@ -72,7 +72,11 @@ def reply():
             fp.write(response.content)
             fp.close()
         textFromImage = imgToText('client_Image.jpg')
+        langId = ''
+        if langid.classify(textFromImage) is None:
+            langId = 'en'
         langId = langid.classify(textFromImage)[0]
+        
         print(textFromImage)
         print(google_search(textFromImage))
         sendText(request.form.get('WaId'),'en',google_search(textFromImage))
@@ -81,7 +85,10 @@ def reply():
     global quiz_time
     message_ = request.form.get('Body')
     print(request.form)
-    langId = langid.classify(message_)[0]
+    langId = ''
+    if langid.classify(textFromImage) is None:
+        langId = 'en'
+    langId = langid.classify(textFromImage)[0]
     if langId != 'en':
         message = GoogleTranslator(
             source="auto", target="en").translate(message_)
