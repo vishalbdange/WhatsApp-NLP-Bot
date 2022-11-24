@@ -63,12 +63,19 @@ def reply():
     if request.form.get('MediaContentType0') is not None:
         
         print(request.form)
+       
+        print(request.form)
+       
         response = requests.get(request.form.get('MediaUrl0'))
         if response.status_code:
             fp = open('client_Image.jpg', 'wb')
             fp.write(response.content)
             fp.close()
         textFromImage = imgToText('client_Image.jpg')
+        langId = langid.classify(textFromImage)[0]
+        print(textFromImage)
+        print(google_search(textFromImage))
+        sendText(request.form.get('WaId'),'en',google_search(textFromImage))
         return ''
     print(request)
     global quiz_time

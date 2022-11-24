@@ -35,7 +35,7 @@ def imgToText(imageFile):
     whole_text = ""
     for(bbox,text,prob) in  results:
         whole_text += text + ' '
-    print(whole_text)
+    # print(whole_text)
     return whole_text
 
 
