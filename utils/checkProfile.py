@@ -11,7 +11,7 @@ def checkProfile(receiver, langId, courseraProfileUrl):
         sendText(receiver, langId, "Awesome! We have noted your coursera profile successfully!")
         return ''
     
-    mediaId, mediaType = uploadMedia('courseraProfileHelp.jpg', 'courseraProfileHelp.jpg', 'jpg')
+    mediaId, mediaType = uploadMedia('courseraProfileHelp.jpg', 'static/helpMedia/courseraProfileHelp.jpg', 'jpg')
     print(mediaId, mediaType)
     sendText(receiver, langId, "It looks like you submitted an incorrect profile URL link. Please make sure that you submit the correct link that is displayed when you visit your profile in our portal. For reference, please consider the image attached!")
     sendMedia(receiver, mediaId, mediaType)

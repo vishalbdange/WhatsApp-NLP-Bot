@@ -1,5 +1,5 @@
 # Utils
-from utils.visualisation import studentProgress
+from utils.gradeReport import studentProgress
 from utils.video import youtube
 from utils.sendMessage import send_message
 # from utils.quiz import quiz_bot
@@ -14,6 +14,7 @@ from utils.schedule import getTimeSlot
 from utils.schedule import bookTimeSlot
 from utils.reschedule import rescheduleAppointment
 from utils.checkProfile import checkProfile
+from utils.quizPicture import getQuizPicture
 
 from api.text import sendText
 from api.quizButtons import sendQuiz
@@ -59,7 +60,6 @@ app = Flask(__name__)
 @app.route('/', methods=['POST'])
 def reply():
 
-    global quiz_time
     message_ = request.form.get('Body')
     print(request.form)
     langId = langid.classify(message_)[0]
@@ -123,11 +123,12 @@ def reply():
     # if user != None and (response_df.query_result.intent.display_name == 'Register' or response_df.query_result.intent.display_name == 'Register-Follow'):
 
 
-    workflow(user, request, response_df)
+    workflow(user, request, response_df, langId)
     return ''
 
 
-def workflow(user, request, response_df):
+def workflow(user, request, response_df, langId):
+    print(response_df.query_result.intent.display_name)
 
     if response_df.query_result.intent.display_name == 'Organisation':
         organisationIntroduction(request.form.get('WaId'), user['langId'])
@@ -184,7 +185,7 @@ def workflow(user, request, response_df):
         date_format_str = '%d/%m/%Y %H:%M:%S'
         userCourses = []
         for i in range(0, len(user['courses'])):
-            if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()):
+            if user['courses'][i]['coursePayment'] is True and user['courses'][i]['courseEndDate'] > str(date.today()) and user['courses'][i]['courseType'] == 'static':
                 # coursesRank.append(str(i + 1))
                 userCourses.append((user['courses'][i]['courseId']))
                 
@@ -221,8 +222,9 @@ def workflow(user, request, response_df):
 
                 quizBusy = str(index) +'-'+str(quizNumber)+'-'+quizId+'-'+questionNumber
                 db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': quizBusy}})
+                quizImageId = getQuizPicture(quizChosen[questionNumber]['image'])
 
-                sendQuizQuestion(request.form.get('WaId'), user['langId'], quizChosen[questionNumber]['question'], quizOptions, "672797807634777")
+                sendQuizQuestion(request.form.get('WaId'), user['langId'], quizChosen[questionNumber]['question'], quizOptions, quizImageId)
 
                 return ''
             
@@ -278,7 +280,8 @@ def workflow(user, request, response_df):
                 
                 quizBusy = str(index) +'-'+str(quizNumber)+'-'+quizId+'-'+questionNumber
                 db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'quizBusy': quizBusy}})
-                sendQuizQuestion(request.form.get('WaId'), user['langId'], quizChosen[questionNumber]['question'], quizOptions, "672797807634777")
+                quizImageId = getQuizPicture(quizChosen[questionNumber]['image'])
+                sendQuizQuestion(request.form.get('WaId'), user['langId'], quizChosen[questionNumber]['question'], quizOptions, quizImageId)
                 return ''    
         
         quizId = user['quizBusy'].split("-")[2]
@@ -291,10 +294,72 @@ def workflow(user, request, response_df):
         return ''
         
     
-    if user['UNIT-TESTING'] == 'vlue':
+    if response_df.query_result.intent.display_name == 'Progress':
+        sendTwoButton(request.form.get('WaId'), user['langId'], "Do you want to check progress for yourself?", ["myself", "someone"], ["Yes", "No"])
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Progress - no':
+        sendText(request.form.get('WaId'), user['langId'], "Please specify the mobile number of that person starting with '91'. For example, 919876543210.")
+        return ''
+    
+    if response_df.query_result.intent.display_name == 'Progress - yes' or response_df.query_result.intent.display_name == 'Progress - no - number':
+        specifiedUser = ''
+        if (request.form.get('Body')).startswith("91"):
+            foundUser = db['test'].find_one({'_id': request.form.get('Body')})
+            if foundUser is None:
+                sendText(request.form.get('WaId'), user['langId'], "Invalid number. Please check if the provided number was correct.")
+            else:
+                specifiedUser = foundUser
+        
+        else:
+            specifiedUser = user
+        userCourses = []
+        for i in range(0, len(specifiedUser['courses'])):
+            if specifiedUser['courses'][i]['courseStartDate'] <= str(date.today()):
+                # coursesRank.append(str(i + 1))
+                if specifiedUser['courses'][i]['courseType'] == 'static':
+                    if len(specifiedUser['courses'][i]['courseQuizzes']) > 0:
+                        userCourses.append((specifiedUser['courses'][i]['courseId']))
+                        continue
+                
+                if specifiedUser['courses'][i]['courseType'] == 'dynamic':
+                    if specifiedUser['courses'][i]['courseFeedback'] != '':
+                        userCourses.append((specifiedUser['courses'][i]['courseId']))
+                        continue
+        
+        if len(userCourses) == 0:
+            sendText(request.form.get('WaId'), user['langId'], "No progress to show sadly!")
+            return ''
+        
+        db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'resultBusy': { 'busy':'true', 'user': specifiedUser['_id']}}})
+        sendList(request.form.get('WaId'), user['langId'], "Please choose the course to check progress", "Course", userCourses, userCourses, None, False)
+        return ''
+        
+    if user['resultBusy']['busy'] == 'true':
+        userCourses = []
+        specifiedUser = db['test'].find_one({'_id': user['resultBusy']['user']})
+        for i in range(0, len(specifiedUser['courses'])):
+            if specifiedUser['courses'][i]['courseStartDate'] <= str(date.today()):
+                # coursesRank.append(str(i + 1))
+                userCourses.append((specifiedUser['courses'][i]['courseId']))
+                
+        if request.form.get('Body') in userCourses: 
+            db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'resultBusy': { 'busy':'false', 'user': ''}}})
+            studentProgress(request.form.get('WaId'), user['resultBusy']['user'], request.form.get('Body'))
+            return ''
+            
+        else:
+            db['test'].update_one({'_id': request.form.get('WaId')}, { "$set": {'resultBusy': { 'busy':'false', 'user': ''}}})
+            sendText(request.form.get('WaId'), user['langId'], "Invalid course selection!")
+            return ''
+        return ''
+    
+    if user['UNIT-TESTING'] == '':
         # sendTwoButton(request.form.get('WaId'), user["langId"], "Why not explore the courses we offer? \n You can also know more about us!", ["courses", "organisation"], ["Explore courses now!", "Know more about us!"])
         # studentProgress(request.form.get('WaId'))
         # checkProfile(request.form.get('WaId'), user['langId'],'https://www.coursera.org/user/93bf6a1a88d976c68fabeeebf253f65')
+        sendTwoButton(request.form.get('WaId'), user['langId'], "Do you want to check progress for yourself or someone else?", ["myself", "someone"], ["For Myself", "For Someone Else"])
+        return ''
         
         courseSelected = db["course"].find_one({'_id': 'math'})
         
@@ -320,19 +385,12 @@ def workflow(user, request, response_df):
         result_videos = youtube(response_df.query_result.query_text)
         print(result_videos)
         for video in result_videos:
-            sendText(request.form.get('WaId'), video['url'] + ' | ' + video['title'])
+            sendText(request.form.get('WaId'), langId, video['url'] + ' | ' + video['title'])
         return ''
     
     if response_df.query_result.intent.display_name == 'WebSearch':  # Google JEE datde
         result_search = google_search(response_df.query_result.query_text)
-        sendText(request.form.get('WaId'), result_search)
-    
-    if response_df.query_result.intent.display_name == 'Parent':
-        print(response_df.query_result.parameters)
-        picture_url = studentProgress()
-        send_message(
-            response_df.query_result.fulfillment_text, picture_url)
-        return ''
+        sendText(request.form.get('WaId'), langId, result_search)
     
     else:
         # quiz_bot(db, 'M1')
